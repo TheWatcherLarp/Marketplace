@@ -22,7 +22,8 @@ interface MarketplaceItem {
   id: string;
   name: string;
   description: string | null;
-  price: number;
+  crowns: number; // Changed from price
+  pennies: number; // Changed from price
   seller_id: string;
   listed_at: string;
 }
@@ -124,7 +125,7 @@ const HomePage = () => {
               {marketplaceItems.map((item) => (
                 <div key={item.id} className="border p-3 rounded-md bg-gray-50 dark:bg-gray-700">
                   <h4 className="font-semibold text-lg text-gray-900 dark:text-white">{item.name}</h4>
-                  <p className="text-sm text-gray-700 dark:text-gray-300">${item.price.toFixed(2)}</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">{item.crowns} Crowns, {item.pennies} Pennies</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{item.description || 'No description.'}</p>
                 </div>
               ))}
