@@ -40,7 +40,7 @@ export const SessionContextProvider: React.FC<{ children: React.ReactNode }> = (
       const currentPath = location.pathname;
       const isLoginPage = currentPath === '/login';
       const isCreateCharacterPage = currentPath === '/create-character';
-      const isCharacterInventoryPage = currentPath === '/character-inventory';
+      const isHomePage = currentPath === '/home';
 
       if (session) {
         // User is logged in
@@ -59,9 +59,9 @@ export const SessionContextProvider: React.FC<{ children: React.ReactNode }> = (
             }
 
             if (character) {
-              // Active character exists, redirect to inventory if not already there
-              if (!isCharacterInventoryPage) {
-                navigate('/character-inventory');
+              // Active character exists, redirect to home page if not already there
+              if (!isHomePage) {
+                navigate('/home');
               }
             } else {
               // No active character, redirect to create character page if not already there
@@ -76,7 +76,7 @@ export const SessionContextProvider: React.FC<{ children: React.ReactNode }> = (
           }
         } else if (isLoginPage) {
           // Logged in but no user ID (shouldn't happen often), redirect to home
-          navigate('/');
+          navigate('/home');
         }
       } else {
         // User is not logged in, redirect to login page if not already there
