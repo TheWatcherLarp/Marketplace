@@ -12,7 +12,7 @@ interface Character {
   name: string;
   race: string;
   guild: string;
-  branch: string; // Added branch
+  branch: string;
   created_at: string;
   retired_at: string | null;
   crowns: number;
@@ -25,9 +25,9 @@ interface MarketplaceItem {
   crowns: number;
   pennies: number;
   seller_id: string;
-  seller_character_id: string | null; // Added seller_character_id
+  seller_character_id: string | null;
   listed_at: string;
-  category: string; // Added category
+  category: string;
 }
 
 const HomePage = () => {
@@ -52,7 +52,7 @@ const HomePage = () => {
           .is('retired_at', null)
           .single();
 
-        if (charError && charError.code !== 'PGRST116') { // PGRST116 means no rows found
+        if (charError && charError.code !== 'PGRST116') {
           throw charError;
         }
         setCharacter(charData || null);
@@ -60,7 +60,7 @@ const HomePage = () => {
         // Fetch a few latest marketplace items
         const { data: itemsData, error: itemsError } = await supabase
           .from('marketplace_items')
-          .select('*, seller_character_id') // Explicitly select seller_character_id
+          .select('*, seller_character_id')
           .order('listed_at', { ascending: false })
           .limit(3);
 
@@ -111,7 +111,7 @@ const HomePage = () => {
                   ? character.guild.charAt(0).toUpperCase() + character.guild.slice(1)
                   : 'N/A'}
               </p>
-              <p className="text-md text-gray-600 dark:text-gray-400">Branch: {character.branch || 'N/A'}</p> {/* Display branch */}
+              <p className="text-md text-gray-600 dark:text-gray-400">Branch: {character.branch || 'N/A'}</p>
               <p className="text-md text-gray-600 dark:text-gray-400">Crowns: {character.crowns}</p>
               <p className="text-md text-gray-600 dark:text-gray-400">Pennies: {character.pennies}</p>
               <Button asChild className="w-full">
@@ -119,6 +119,9 @@ const HomePage = () => {
               </Button>
               <Button asChild className="w-full" variant="outline">
                 <Link to="/branch-members">View Branch Members</Link>
+              </Button>
+              <Button asChild className="w-full" variant="outline">
+                <Link to="/dead-characters">View Deceased Characters</Link>
               </Button>
             </>
           ) : (
