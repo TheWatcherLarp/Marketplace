@@ -15,7 +15,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { showError, showSuccess } from '@/utils/toast';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom'; // Import Link
 
 interface Character {
   id: string;
@@ -135,10 +135,13 @@ const CharacterInventory = () => {
           </p>
           {/* Add more inventory details here later */}
         </CardContent>
-        <CardFooter className="flex justify-center p-6">
+        <CardFooter className="flex flex-col gap-4 p-6"> {/* Use flex-col and gap for spacing */}
+          <Button asChild className="w-full">
+            <Link to="/marketplace">Go to Marketplace</Link>
+          </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive">Retire Character</Button>
+              <Button variant="destructive" className="w-full">Retire Character</Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
