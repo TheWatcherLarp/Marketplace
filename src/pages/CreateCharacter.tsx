@@ -160,6 +160,7 @@ const CreateCharacter = () => {
                 <SelectContent>
                   <SelectItem value="mercenary">Mercenary</SelectItem>
                   <SelectItem value="scout">Scout</SelectItem>
+                  <SelectItem value="blacksmith">Blacksmith</SelectItem>
                 </SelectContent>
               </Select>
             </div>
