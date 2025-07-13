@@ -25,9 +25,9 @@ interface MarketplaceItem {
   crowns: number;
   pennies: number;
   seller_id: string;
+  seller_character_id: string | null; // Added seller_character_id
   listed_at: string;
   category: string; // Added category
-  // quantity: number; // Removed quantity as each listing is now unique
   sellerCharacterName?: string;
   crafter_user_id: string | null; // Add crafter_user_id
   crafterCharacterName?: string; // Add crafterCharacterName
@@ -75,7 +75,7 @@ const Marketplace = () => {
         // Fetch marketplace items, optionally filtered by category
         let query = supabase
           .from('marketplace_items')
-          .select('*');
+          .select('*, seller_character_id'); // Explicitly select seller_character_id
 
         if (selectedCategory !== 'all') {
           query = query.eq('category', selectedCategory);
@@ -90,40 +90,34 @@ const Marketplace = () => {
         // Fetch ALL characters (active, retired, and dead) to map seller_id and crafter_user_id to character names
         const { data: allCharactersData, error: allCharactersError } = await supabase
           .from('characters')
-          .select('user_id, name');
+          .select('user_id, name, id'); // Select character ID as well
 
         const { data: retiredCharactersData, error: retiredCharactersError } = await supabase
           .from('retired_characters')
-          .select('user_id, name');
+          .select('user_id, name, id');
 
         const { data: deadCharactersData, error: deadCharactersError } = await supabase
           .from('dead_characters')
-          .select('user_id, name');
+          .select('user_id, name, id');
 
         if (allCharactersError) throw allCharactersError;
         if (retiredCharactersError) throw retiredCharactersError;
         if (deadCharactersError) throw deadCharactersError;
 
-        const characterMap = new Map<string, string>();
+        const userToCharacterNameMap = new Map<string, string>();
+        const characterIdToCharacterNameMap = new Map<string, string>();
         
-        // Add active characters
-        (allCharactersData || []).forEach(char => {
-          characterMap.set(char.user_id, char.name);
-        });
-        // Add retired characters (override if active character has same user_id, but typically won't happen)
-        (retiredCharactersData || []).forEach(char => {
-          characterMap.set(char.user_id, char.name);
-        });
-        // Add dead characters (override if active/retired character has same user_id)
-        (deadCharactersData || []).forEach(char => {
-          characterMap.set(char.user_id, char.name);
+        // Populate maps
+        [...(allCharactersData || []), ...(retiredCharactersData || []), ...(deadCharactersData || [])].forEach(char => {
+          userToCharacterNameMap.set(char.user_id, char.name);
+          characterIdToCharacterNameMap.set(char.id, char.name);
         });
 
         // Enrich marketplace items with seller's character name AND crafter's character name
         const enrichedItems = (marketplaceItems || []).map(item => ({
           ...item,
-          sellerCharacterName: characterMap.get(item.seller_id) || 'Unknown Adventurer',
-          crafterCharacterName: item.crafter_user_id ? characterMap.get(item.crafter_user_id) || 'Unknown Crafter' : 'Unknown Crafter',
+          sellerCharacterName: item.seller_character_id ? characterIdToCharacterNameMap.get(item.seller_character_id) || 'Unknown Adventurer' : userToCharacterNameMap.get(item.seller_id) || 'Unknown Adventurer',
+          crafterCharacterName: item.crafter_user_id ? userToCharacterNameMap.get(item.crafter_user_id) || 'Unknown Crafter' : 'Unknown Crafter',
         }));
         
         setItems(enrichedItems);
@@ -255,7 +249,7 @@ const Marketplace = () => {
             {items.map((item) => (
               <Card key={item.id} className="flex flex-col">
                 <CardHeader>
-                  <CardTitle>{item.name}</CardTitle> {/* Removed (x{item.quantity}) */}
+                  <CardTitle>{item.name}</CardTitle>
                   <CardDescription>
                     {item.crowns} Crowns, {item.pennies} Pennies
                   </CardDescription>
@@ -283,7 +277,7 @@ const Marketplace = () => {
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button className="w-full" disabled={isBuying}>
-                        {item.seller_id === session?.user?.id ? 'Your Item' : 'Buy Item'}
+                        {item.seller_character_id === activeCharacter?.id ? 'Your Item' : 'Buy Item'}
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
