@@ -306,14 +306,20 @@ const CharacterInventory = () => {
               This is your character inventory page.
             </p>
             <p className="text-md text-gray-700 dark:text-gray-300 mt-2">
-              Race: {typeof character.race === 'string' && character.race
-                ? character.race.charAt(0).toUpperCase() + character.race.slice(1)
-                : 'N/A'}
+              Race: {(() => {
+                console.log('Character race:', character?.race, 'Type:', typeof character?.race);
+                return typeof character?.race === 'string' && character?.race
+                  ? character.race.charAt(0).toUpperCase() + character.race.slice(1)
+                  : 'N/A';
+              })()}
             </p>
             <p className="text-md text-gray-700 dark:text-gray-300 mt-2">
-              Guild: {typeof character.guild === 'string' && character.guild
-                ? character.guild.charAt(0).toUpperCase() + character.guild.slice(1)
-                : 'N/A'}
+              Guild: {(() => {
+                console.log('Character guild:', character?.guild, 'Type:', typeof character?.guild);
+                return typeof character?.guild === 'string' && character?.guild
+                  ? character.guild.charAt(0).toUpperCase() + character.guild.slice(1)
+                  : 'N/A';
+              })()}
             </p>
             <p className="text-md text-gray-700 dark:text-gray-300 mt-2">
               Branch: {character.branch || 'N/A'}
