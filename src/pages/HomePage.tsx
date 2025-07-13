@@ -12,27 +12,28 @@ interface Character {
   name: string;
   race: string;
   guild: string;
+  branch: string; // Added branch
   created_at: string;
   retired_at: string | null;
-  crowns: number; // Added crowns
-  pennies: number; // Added pennies
+  crowns: number;
+  pennies: number;
 }
 
 interface MarketplaceItem {
   id: string;
   name: string;
   description: string | null;
-  crowns: number; // Changed from price
-  pennies: number; // Changed from price
+  crowns: number;
+  pennies: number;
   seller_id: string;
   listed_at: string;
 }
 
 const HomePage = () => {
   const { session } = useSession();
-  const [character, setCharacter] = useState<Character | null>(null); // Store full character object
-  const [marketplaceItems, setMarketplaceItems] = useState<MarketplaceItem[]>([]); // Store marketplace items
-  const [loading, setLoading] = useState(true); // Combined loading state
+  const [character, setCharacter] = useState<Character | null>(null);
+  const [marketplaceItems, setMarketplaceItems] = useState<MarketplaceItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -45,12 +46,12 @@ const HomePage = () => {
         // Fetch active character
         const { data: charData, error: charError } = await supabase
           .from('characters')
-          .select('*') // Fetch all character details
+          .select('*')
           .eq('user_id', session.user.id)
           .is('retired_at', null)
           .single();
 
-        if (charError && charError.code !== 'PGRST116') { // PGRST116 means no rows found
+        if (charError && charError.code !== 'PGRST116') {
           throw charError;
         }
         setCharacter(charData || null);
@@ -60,7 +61,7 @@ const HomePage = () => {
           .from('marketplace_items')
           .select('*')
           .order('listed_at', { ascending: false })
-          .limit(3); // Limit to 3 items for a summary
+          .limit(3);
 
         if (itemsError) {
           throw itemsError;
@@ -101,6 +102,7 @@ const HomePage = () => {
               <p className="text-lg text-gray-700 dark:text-gray-300">Name: {character.name}</p>
               <p className="text-md text-gray-600 dark:text-gray-400">Race: {character.race.charAt(0).toUpperCase() + character.race.slice(1)}</p>
               <p className="text-md text-gray-600 dark:text-gray-400">Guild: {character.guild.charAt(0).toUpperCase() + character.guild.slice(1)}</p>
+              <p className="text-md text-gray-600 dark:text-gray-400">Branch: {character.branch}</p> {/* Display branch */}
               <p className="text-md text-gray-600 dark:text-gray-400">Crowns: {character.crowns}</p>
               <p className="text-md text-gray-600 dark:text-gray-400">Pennies: {character.pennies}</p>
               <Button asChild className="w-full">

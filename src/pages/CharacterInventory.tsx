@@ -31,6 +31,7 @@ interface Character {
   name: string;
   race: string;
   guild: string;
+  branch: string; // Added branch
   created_at: string;
   retired_at: string | null;
   crowns: number;
@@ -261,6 +262,9 @@ const CharacterInventory = () => {
             </p>
             <p className="text-md text-gray-700 dark:text-gray-300 mt-2">
               Guild: {character.guild.charAt(0).toUpperCase() + character.guild.slice(1)}
+            </p>
+            <p className="text-md text-gray-700 dark:text-gray-300 mt-2">
+              Branch: {character.branch} {/* Display branch */}
             </p>
             <p className="text-md text-gray-700 dark:text-gray-300 mt-2">
               Crowns: {character.crowns}

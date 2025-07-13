@@ -12,7 +12,8 @@ const CreateCharacter = () => {
   const [characterName, setCharacterName] = useState('');
   const [race, setRace] = useState('');
   const [guild, setGuild] = useState('');
-  const [loading, setLoading] = useState(true); // Start loading to check for existing character
+  const [branch, setBranch] = useState(''); // New state for branch
+  const [loading, setLoading] = useState(true);
   const [hasExistingCharacter, setHasExistingCharacter] = useState(false);
   const navigate = useNavigate();
   const { session } = useSession();
@@ -32,7 +33,7 @@ const CreateCharacter = () => {
           .is('retired_at', null)
           .single();
 
-        if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
+        if (error && error.code !== 'PGRST116') {
           throw error;
         }
 
@@ -57,7 +58,7 @@ const CreateCharacter = () => {
       showError('User not logged in.');
       return;
     }
-    if (hasExistingCharacter) { // Double check to prevent submission if state is out of sync
+    if (hasExistingCharacter) {
       showError('You already have an active character.');
       return;
     }
@@ -73,12 +74,16 @@ const CreateCharacter = () => {
       showError('Please select a character guild.');
       return;
     }
+    if (!branch) { // New validation for branch
+      showError('Please select a branch.');
+      return;
+    }
 
-    setLoading(true); // Set loading for the creation process
+    setLoading(true);
     try {
       const { data, error } = await supabase
         .from('characters')
-        .insert({ user_id: session.user.id, name: characterName.trim(), race: race, guild: guild })
+        .insert({ user_id: session.user.id, name: characterName.trim(), race: race, guild: guild, branch: branch }) // Include branch
         .select();
 
       if (error) {
@@ -105,7 +110,6 @@ const CreateCharacter = () => {
   }
 
   if (hasExistingCharacter) {
-    // This block will be briefly shown before redirect, but the redirect should be fast
     return null;
   }
 
@@ -156,6 +160,18 @@ const CreateCharacter = () => {
                 <SelectContent>
                   <SelectItem value="mercenary">Mercenary</SelectItem>
                   <SelectItem value="scout">Scout</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div> {/* New Select for Branch */}
+              <label htmlFor="characterBranch" className="sr-only">Branch</label>
+              <Select onValueChange={setBranch} value={branch} disabled={loading}>
+                <SelectTrigger id="characterBranch" className="w-full">
+                  <SelectValue placeholder="Select a branch" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Portsmouth">Portsmouth</SelectItem>
+                  <SelectItem value="Guildford">Guildford</SelectItem>
                 </SelectContent>
               </Select>
             </div>
