@@ -89,6 +89,9 @@ const CharacterInventory = () => {
     }
   };
 
+  // The handleAddPennies function is no longer needed if the button is removed.
+  // However, I'll keep it for now as it's part of the currency conversion logic
+  // and might be reused or called from other places in the future.
   const handleAddPennies = async () => {
     if (!character?.id) {
       showError('No active character found.');
@@ -192,9 +195,7 @@ const CharacterInventory = () => {
             </p>
           </CardContent>
           <CardFooter className="flex flex-col gap-4 p-6">
-            <Button onClick={handleAddPennies} disabled={isUpdatingPennies || loading} className="w-full">
-              {isUpdatingPennies ? 'Adding Pennies...' : 'Add 10 Pennies'}
-            </Button>
+            {/* Removed the "Add 10 Pennies" button */}
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" className="w-full">Retire Character</Button>
