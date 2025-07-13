@@ -46,7 +46,7 @@ interface CharacterItem {
   description: string | null;
   quantity: number;
   acquired_at: string;
-  category: string; // Keeping category as it's part of the item data
+  // Removed category as it's no longer used for display or filtering in inventory
 }
 
 const CharacterInventory = () => {
@@ -107,7 +107,7 @@ const CharacterInventory = () => {
 
   useEffect(() => {
     fetchCharacterAndItems();
-  }, [session]); // No longer dependent on filterCategory
+  }, [session]);
 
   const handleRetireCharacter = async () => {
     if (!character?.id) {
