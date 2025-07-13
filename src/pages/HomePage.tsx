@@ -120,9 +120,6 @@ const HomePage = () => {
               <Button asChild className="w-full" variant="outline">
                 <Link to="/branch-members">View Branch Members</Link>
               </Button>
-              <Button asChild className="w-full" variant="outline">
-                <Link to="/dead-characters">View Deceased Characters</Link>
-              </Button>
             </>
           ) : (
             <Button asChild className="w-full">
