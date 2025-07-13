@@ -14,6 +14,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'; // Import Select components
 import { showError, showSuccess } from '@/utils/toast';
 import { Link } from 'react-router-dom';
 
@@ -25,6 +26,7 @@ interface MarketplaceItem {
   pennies: number;
   seller_id: string;
   listed_at: string;
+  category: string; // Added category
   sellerCharacterName?: string;
 }
 
@@ -42,6 +44,7 @@ const Marketplace = () => {
   const [hasCharacter, setHasCharacter] = useState(false);
   const [activeCharacter, setActiveCharacter] = useState<Character | null>(null);
   const [isBuying, setIsBuying] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('all'); // New state for category filter
 
   const checkCharacterAndFetchItems = async () => {
     if (!session?.user?.id) {
@@ -58,7 +61,7 @@ const Marketplace = () => {
         .is('retired_at', null)
         .single();
 
-      if (characterError && characterError.code !== 'PGRST116') {
+      if (characterError && characterError.code !== 'PGRST116') { // PGRST116 means no rows found
         throw characterError;
       }
 
@@ -66,11 +69,16 @@ const Marketplace = () => {
         setHasCharacter(true);
         setActiveCharacter(character);
 
-        // Fetch marketplace items
-        const { data: marketplaceItems, error: itemsError } = await supabase
+        // Fetch marketplace items, optionally filtered by category
+        let query = supabase
           .from('marketplace_items')
-          .select('*')
-          .order('listed_at', { ascending: false });
+          .select('*');
+
+        if (selectedCategory !== 'all') {
+          query = query.eq('category', selectedCategory);
+        }
+        
+        const { data: marketplaceItems, error: itemsError } = await query.order('listed_at', { ascending: false });
 
         if (itemsError) {
           throw itemsError;
@@ -112,7 +120,7 @@ const Marketplace = () => {
 
   useEffect(() => {
     checkCharacterAndFetchItems();
-  }, [session]);
+  }, [session, selectedCategory]); // Re-fetch when category changes
 
   const handleBuyItem = async (item: MarketplaceItem) => {
     if (!activeCharacter) {
@@ -193,16 +201,29 @@ const Marketplace = () => {
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-4">
       <div className="max-w-4xl mx-auto">
-        <div className="flex justify-end mb-4">
-          <Button asChild variant="outline">
-            <Link to="/home">Home</Link>
-          </Button>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Marketplace
+          </h1>
+          <div className="flex items-center space-x-4">
+            <Select onValueChange={setSelectedCategory} value={selectedCategory}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                <SelectItem value="weapons">Weapons</SelectItem>
+                <SelectItem value="armour">Armour</SelectItem>
+                <SelectItem value="misc">Misc</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button asChild variant="outline">
+              <Link to="/home">Home</Link>
+            </Button>
+          </div>
         </div>
-        <h1 className="text-3xl font-bold text-center mb-6 text-gray-900 dark:text-white">
-          Marketplace
-        </h1>
         {items.length === 0 ? (
-          <p className="text-center text-gray-600 dark:text-gray-400">No items currently listed in the marketplace.</p>
+          <p className="text-center text-gray-600 dark:text-gray-400">No items currently listed in this category.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {items.map((item) => (
@@ -218,6 +239,9 @@ const Marketplace = () => {
                     {item.description || 'No description provided.'}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    Category: {item.category.charAt(0).toUpperCase() + item.category.slice(1)}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     Crafted By: {item.sellerCharacterName}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">

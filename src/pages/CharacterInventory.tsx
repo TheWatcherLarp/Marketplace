@@ -23,6 +23,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'; // Import Select components
 import { showError, showSuccess } from '@/utils/toast';
 import { useNavigate, Link } from 'react-router-dom';
 
@@ -57,6 +58,7 @@ const CharacterInventory = () => {
   const [selectedItemToSell, setSelectedItemToSell] = useState<CharacterItem | null>(null);
   const [sellCrowns, setSellCrowns] = useState(0);
   const [sellPennies, setSellPennies] = useState(0);
+  const [sellCategory, setSellCategory] = useState('misc'); // New state for category
   const [isSelling, setIsSelling] = useState(false);
   const navigate = useNavigate();
 
@@ -210,6 +212,10 @@ const CharacterInventory = () => {
       showError('Pennies must be less than 12. Please convert 12 pennies to 1 Crown.');
       return;
     }
+    if (!sellCategory) {
+      showError('Please select a category for the item.');
+      return;
+    }
 
     setIsSelling(true);
     try {
@@ -218,6 +224,7 @@ const CharacterInventory = () => {
           character_item_id: selectedItemToSell.id,
           price_crowns: sellCrowns,
           price_pennies: sellPennies,
+          category: sellCategory, // Pass the selected category
         }),
       });
 
@@ -230,6 +237,7 @@ const CharacterInventory = () => {
       setSelectedItemToSell(null);
       setSellCrowns(0);
       setSellPennies(0);
+      setSellCategory('misc'); // Reset category
       fetchCharacterAndItems(); // Refresh inventory
     } catch (error: any) {
       showError(`Failed to sell item: ${error.message}`);
@@ -388,7 +396,7 @@ const CharacterInventory = () => {
           <DialogHeader>
             <DialogTitle>Sell {selectedItemToSell?.item_name}</DialogTitle>
             <DialogDescription>
-              Set the price for your item in Crowns and Pennies.
+              Set the price and category for your item.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -419,6 +427,21 @@ const CharacterInventory = () => {
                 min="0"
                 disabled={isSelling}
               />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="category" className="text-right">
+                Category
+              </label>
+              <Select onValueChange={setSellCategory} value={sellCategory} disabled={isSelling}>
+                <SelectTrigger id="category" className="col-span-3">
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="weapons">Weapons</SelectItem>
+                  <SelectItem value="armour">Armour</SelectItem>
+                  <SelectItem value="misc">Misc</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <DialogFooter>

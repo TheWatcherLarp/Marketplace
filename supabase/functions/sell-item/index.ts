@@ -22,10 +22,10 @@ serve(async (req) => {
       }
     );
 
-    const { character_item_id, price_crowns, price_pennies } = await req.json();
+    const { character_item_id, price_crowns, price_pennies, category } = await req.json();
 
-    if (!character_item_id || price_crowns === undefined || price_pennies === undefined) {
-      return new Response(JSON.stringify({ error: 'Missing required parameters.' }), {
+    if (!character_item_id || price_crowns === undefined || price_pennies === undefined || !category) {
+      return new Response(JSON.stringify({ error: 'Missing required parameters (character_item_id, price_crowns, price_pennies, category).' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
       });
@@ -36,6 +36,7 @@ serve(async (req) => {
       p_character_item_id: character_item_id,
       p_price_crowns: price_crowns,
       p_price_pennies: price_pennies,
+      p_category: category,
     });
 
     if (error) {
