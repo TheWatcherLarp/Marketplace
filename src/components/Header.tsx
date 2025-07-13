@@ -32,6 +32,9 @@ const Header = () => {
             <DropdownMenuItem asChild>
               <Link to="/the-recently-dead">The Recently Dead</Link>
             </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/local-marketplace">Your Listings</Link>
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

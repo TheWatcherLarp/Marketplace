@@ -11,7 +11,8 @@ import CharacterInventory from "./pages/CharacterInventory";
 import Marketplace from "./pages/Marketplace";
 import HomePage from "./pages/HomePage";
 import BranchMembers from "./pages/BranchMembers";
-import TheRecentlyDead from "./pages/TheRecentlyDead"; // Import the new page
+import TheRecentlyDead from "./pages/TheRecentlyDead";
+import LocalMarketplace from "./pages/LocalMarketplace"; // Import the new page
 import { SessionContextProvider } from "./components/SessionContextProvider";
 
 const queryClient = new QueryClient();
@@ -31,7 +32,8 @@ const App = () => (
             <Route path="/marketplace" element={<Marketplace />} />
             <Route path="/home" element={<HomePage />} />
             <Route path="/branch-members" element={<BranchMembers />} />
-            <Route path="/the-recently-dead" element={<TheRecentlyDead />} /> {/* New route */}
+            <Route path="/the-recently-dead" element={<TheRecentlyDead />} />
+            <Route path="/local-marketplace" element={<LocalMarketplace />} /> {/* New route */}
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
