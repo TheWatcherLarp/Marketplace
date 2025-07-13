@@ -62,7 +62,7 @@ const CharacterInventory = () => {
   const { session } = useSession();
   const [character, setCharacter] = useState<Character | null>(null);
   const [characterItems, setCharacterItems] = useState<CharacterItem[]>([]);
-  const [characterPermits, setCharacterPermits] = useState<CharacterPermit[]>([]); // New state for permits
+  const [characterPermits, setCharacterPermits] = useState<CharacterPermit[]>([]);
   const [loading, setLoading] = useState(true);
   const [isUpdatingPennies, setIsUpdatingPennies] = useState(false);
   const [showSellDialog, setShowSellDialog] = useState(false);
@@ -72,6 +72,7 @@ const CharacterInventory = () => {
   const [sellCategory, setSellCategory] = useState('misc');
   const [sellQuantity, setSellQuantity] = useState(1);
   const [isSelling, setIsSelling] = useState(false);
+  const [hasBlacksmithPermit, setHasBlacksmithPermit] = useState(false); // New state for blacksmith permit
   const navigate = useNavigate();
 
   const fetchCharacterAndItems = async () => {
@@ -106,7 +107,6 @@ const CharacterInventory = () => {
         }
         setCharacterItems(itemsData || []);
 
-        // Fetch permits for the character
         const { data: permitsData, error: permitsError } = await supabase
           .from('character_permits')
           .select('*')
@@ -116,10 +116,12 @@ const CharacterInventory = () => {
           throw permitsError;
         }
         setCharacterPermits(permitsData || []);
+        setHasBlacksmithPermit(permitsData?.some(p => p.permit_type === 'blacksmith') || false);
 
       } else {
         setCharacterItems([]);
         setCharacterPermits([]);
+        setHasBlacksmithPermit(false);
       }
     } catch (error: any) {
       showError(`Error fetching character or items: ${error.message}`);
@@ -277,6 +279,28 @@ const CharacterInventory = () => {
     }
   };
 
+  const handleGrantBlacksmithPermit = async () => {
+    if (!character?.id) {
+      showError('No active character found.');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('character_permits')
+        .insert({ character_id: character.id, permit_type: 'blacksmith' });
+
+      if (error) {
+        throw error;
+      }
+
+      showSuccess('Blacksmith Permit granted!');
+      fetchCharacterAndItems(); // Re-fetch to update the UI
+    } catch (error: any) {
+      showError(`Failed to grant permit: ${error.message}`);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
@@ -350,6 +374,11 @@ const CharacterInventory = () => {
                     </Badge>
                   ))}
                 </div>
+              )}
+              {character.guild === 'blacksmith' && !hasBlacksmithPermit && (
+                <Button onClick={handleGrantBlacksmithPermit} className="mt-4 w-full">
+                  Grant Blacksmith Permit
+                </Button>
               )}
             </div>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
@@ -445,6 +474,7 @@ const CharacterInventory = () => {
             <DialogDescription>
               Set the price, category, and quantity to sell for your item.
             </DialogDescription>
+          </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
