@@ -5,7 +5,7 @@ import { useSession } from '@/components/SessionContextProvider';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } => '@/components/ui/select';
 import { showError, showSuccess } from '@/utils/toast';
 
 const CreateCharacter = () => {
@@ -97,6 +97,8 @@ const CreateCharacter = () => {
         if (guild === 'scout' || guild === 'mercenary') {
           permitsToInsert.push({ character_id: characterId, permit_type: 'weapon' });
           permitsToInsert.push({ character_id: characterId, permit_type: 'armour' });
+        } else if (guild === 'blacksmith') {
+          permitsToInsert.push({ character_id: characterId, permit_type: 'blacksmith' });
         }
 
         if (permitsToInsert.length > 0) {
