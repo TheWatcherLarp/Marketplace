@@ -299,6 +299,26 @@ const CharacterInventory = () => {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+            {/* New Character Death Button */}
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" className="w-full">Character Death</Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Confirm Character Death</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to declare your character deceased? This action will mark your character as retired, and they will no longer be playable.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleRetireCharacter}>
+                    Confirm Death
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </CardFooter>
         </Card>
 
