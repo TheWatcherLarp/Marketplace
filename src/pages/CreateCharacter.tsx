@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/components/SessionContextProvider';
@@ -11,15 +11,54 @@ import { showError, showSuccess } from '@/utils/toast';
 const CreateCharacter = () => {
   const [characterName, setCharacterName] = useState('');
   const [race, setRace] = useState('');
-  const [guild, setGuild] = useState(''); // New state for guild
-  const [loading, setLoading] = useState(false);
+  const [guild, setGuild] = useState('');
+  const [loading, setLoading] = useState(true); // Start loading to check for existing character
+  const [hasExistingCharacter, setHasExistingCharacter] = useState(false);
   const navigate = useNavigate();
   const { session } = useSession();
+
+  useEffect(() => {
+    const checkExistingCharacter = async () => {
+      if (!session?.user?.id) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const { data: character, error } = await supabase
+          .from('characters')
+          .select('id')
+          .eq('user_id', session.user.id)
+          .is('retired_at', null)
+          .single();
+
+        if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
+          throw error;
+        }
+
+        if (character) {
+          setHasExistingCharacter(true);
+          showError('You already have an active character. Redirecting to inventory.');
+          navigate('/character-inventory');
+        }
+      } catch (error: any) {
+        showError(`Error checking existing character: ${error.message}`);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkExistingCharacter();
+  }, [session, navigate]);
 
   const handleCreateCharacter = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!session?.user?.id) {
       showError('User not logged in.');
+      return;
+    }
+    if (hasExistingCharacter) { // Double check to prevent submission if state is out of sync
+      showError('You already have an active character.');
       return;
     }
     if (!characterName.trim()) {
@@ -30,16 +69,16 @@ const CreateCharacter = () => {
       showError('Please select a character race.');
       return;
     }
-    if (!guild) { // Validate guild selection
+    if (!guild) {
       showError('Please select a character guild.');
       return;
     }
 
-    setLoading(true);
+    setLoading(true); // Set loading for the creation process
     try {
       const { data, error } = await supabase
         .from('characters')
-        .insert({ user_id: session.user.id, name: characterName.trim(), race: race, guild: guild }) // Include guild in insert
+        .insert({ user_id: session.user.id, name: characterName.trim(), race: race, guild: guild })
         .select();
 
       if (error) {
@@ -56,6 +95,19 @@ const CreateCharacter = () => {
       setLoading(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
+        <p className="text-gray-700 dark:text-gray-300">Checking for existing character...</p>
+      </div>
+    );
+  }
+
+  if (hasExistingCharacter) {
+    // This block will be briefly shown before redirect, but the redirect should be fast
+    return null;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
