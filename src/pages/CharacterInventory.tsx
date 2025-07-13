@@ -24,14 +24,15 @@ interface Character {
   guild: string;
   created_at: string;
   retired_at: string | null;
-  crowns: number; // Added crowns
-  pennies: number; // Added pennies
+  crowns: number;
+  pennies: number;
 }
 
 const CharacterInventory = () => {
   const { session } = useSession();
   const [character, setCharacter] = useState<Character | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isUpdatingPennies, setIsUpdatingPennies] = useState(false); // New state for penny update loading
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -85,6 +86,48 @@ const CharacterInventory = () => {
       navigate('/create-character');
     } catch (error: any) {
       showError(`Failed to retire character: ${error.message}`);
+    }
+  };
+
+  const handleAddPennies = async () => {
+    if (!character?.id) {
+      showError('No active character found.');
+      return;
+    }
+
+    setIsUpdatingPennies(true);
+    try {
+      // Fetch the current character again to ensure we have the latest penny count
+      const { data: currentCharacter, error: fetchError } = await supabase
+        .from('characters')
+        .select('crowns, pennies')
+        .eq('id', character.id)
+        .single();
+
+      if (fetchError) {
+        throw fetchError;
+      }
+
+      const newPennies = currentCharacter.pennies + 10;
+
+      const { data, error } = await supabase
+        .from('characters')
+        .update({ pennies: newPennies })
+        .eq('id', character.id)
+        .select('*'); // Select updated character to get new crowns/pennies
+
+      if (error) {
+        throw error;
+      }
+
+      if (data && data.length > 0) {
+        setCharacter(data[0]); // Update local state with the new character data (including converted crowns/pennies)
+        showSuccess(`Added 10 pennies! Your new balance is ${data[0].crowns} crowns and ${data[0].pennies} pennies.`);
+      }
+    } catch (error: any) {
+      showError(`Failed to add pennies: ${error.message}`);
+    } finally {
+      setIsUpdatingPennies(false);
     }
   };
 
@@ -149,6 +192,9 @@ const CharacterInventory = () => {
             </p>
           </CardContent>
           <CardFooter className="flex flex-col gap-4 p-6">
+            <Button onClick={handleAddPennies} disabled={isUpdatingPennies || loading} className="w-full">
+              {isUpdatingPennies ? 'Adding Pennies...' : 'Add 10 Pennies'}
+            </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" className="w-full">Retire Character</Button>
