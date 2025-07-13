@@ -10,10 +10,16 @@ interface MarketplaceItem {
   id: string;
   name: string;
   description: string | null;
-  crowns: number; // Changed from price
-  pennies: number; // Changed from price
+  crowns: number;
+  pennies: number;
   seller_id: string;
   listed_at: string;
+  sellerCharacterName?: string; // Added for displaying the character's name
+}
+
+interface Character {
+  user_id: string;
+  name: string;
 }
 
 const Marketplace = () => {
@@ -44,7 +50,8 @@ const Marketplace = () => {
 
         if (character) {
           setHasCharacter(true);
-          // Fetch marketplace items if character exists
+          
+          // Fetch marketplace items
           const { data: marketplaceItems, error: itemsError } = await supabase
             .from('marketplace_items')
             .select('*')
@@ -53,7 +60,30 @@ const Marketplace = () => {
           if (itemsError) {
             throw itemsError;
           }
-          setItems(marketplaceItems || []);
+
+          // Fetch all active characters to map seller_id to character name
+          const { data: charactersData, error: charactersError } = await supabase
+            .from('characters')
+            .select('user_id, name')
+            .is('retired_at', null); // Only fetch active characters
+
+          if (charactersError) {
+            throw charactersError;
+          }
+
+          const characterMap = new Map<string, string>();
+          charactersData.forEach(char => {
+            characterMap.set(char.user_id, char.name);
+          });
+
+          // Enrich marketplace items with seller's character name
+          const enrichedItems = (marketplaceItems || []).map(item => ({
+            ...item,
+            sellerCharacterName: characterMap.get(item.seller_id) || 'Unknown Adventurer',
+          }));
+          
+          setItems(enrichedItems);
+
         } else {
           setHasCharacter(false);
         }
@@ -143,6 +173,9 @@ const Marketplace = () => {
                     {item.description || 'No description provided.'}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    Crafted By: {item.sellerCharacterName}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     Listed on: {new Date(item.listed_at).toLocaleDateString()}
                   </p>
                 </CardContent>
