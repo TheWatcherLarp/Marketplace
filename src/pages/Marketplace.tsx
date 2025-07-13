@@ -207,6 +207,11 @@ const Marketplace = () => {
             Marketplace
           </h1>
           <div className="flex items-center space-x-4">
+            {activeCharacter && (
+              <div className="text-gray-700 dark:text-gray-300 text-sm">
+                Your Funds: {activeCharacter.crowns} Crowns, {activeCharacter.pennies} Pennies
+              </div>
+            )}
             <Select onValueChange={setSelectedCategory} value={selectedCategory}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Filter by Category" />
