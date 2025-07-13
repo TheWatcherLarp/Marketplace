@@ -11,6 +11,8 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  console.log('Replenish Shortsword function invoked.');
+
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -24,6 +26,7 @@ serve(async (req) => {
     const itemCategory = 'weapons';
     const itemDescription = 'A basic, well-balanced shortsword, ideal for new adventurers.';
 
+    console.log(`Checking for existing '${itemName}' in marketplace...`);
     // Check if the item exists with the specified price and is an NPC item (seller_id IS NULL)
     const { data: existingItems, error: selectError } = await supabaseClient
       .from('marketplace_items')
@@ -35,14 +38,15 @@ serve(async (req) => {
       .is('seller_id', null);
 
     if (selectError) {
-      console.error('Error checking for existing item:', selectError);
+      console.error('Error checking for existing item:', selectError.message);
       throw selectError;
     }
 
     if (existingItems && existingItems.length > 0) {
-      // Item exists, check quantity
       const existingItem = existingItems[0];
+      console.log(`Found existing '${itemName}' with ID: ${existingItem.id}, Quantity: ${existingItem.quantity}`);
       if (existingItem.quantity === 0) {
+        console.log(`Quantity is 0, replenishing '${itemName}' to 1.`);
         // If quantity is 0, replenish it to 1
         const { error: updateError } = await supabaseClient
           .from('marketplace_items')
@@ -50,14 +54,15 @@ serve(async (req) => {
           .eq('id', existingItem.id);
 
         if (updateError) {
-          console.error('Error replenishing item quantity:', updateError);
+          console.error('Error replenishing item quantity:', updateError.message);
           throw updateError;
         }
-        console.log(`Replenished quantity for ${itemName}.`);
+        console.log(`Successfully replenished quantity for '${itemName}'.`);
       } else {
-        console.log(`${itemName} already exists and has quantity > 0.`);
+        console.log(`'${itemName}' already exists and has quantity > 0. No replenishment needed.`);
       }
     } else {
+      console.log(`'${itemName}' not found as an NPC item. Inserting new item.`);
       // Item does not exist, insert it
       const { error: insertError } = await supabaseClient
         .from('marketplace_items')
@@ -72,10 +77,10 @@ serve(async (req) => {
         });
 
       if (insertError) {
-        console.error('Error inserting new item:', insertError);
+        console.error('Error inserting new item:', insertError.message);
         throw insertError;
       }
-      console.log(`Inserted new ${itemName} into marketplace.`);
+      console.log(`Successfully inserted new '${itemName}' into marketplace.`);
     }
 
     return new Response(JSON.stringify({ message: `${itemName} replenishment check complete.` }), {
@@ -83,8 +88,8 @@ serve(async (req) => {
       status: 200,
     });
 
-  } catch (error) {
-    console.error('Error in replenish-shortsword edge function:', error);
+  } catch (error: any) {
+    console.error('Error in replenish-shortsword edge function:', error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
