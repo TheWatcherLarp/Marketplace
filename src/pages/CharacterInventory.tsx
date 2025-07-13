@@ -23,7 +23,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'; // Import Select components
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { showError, showSuccess } from '@/utils/toast';
 import { useNavigate, Link } from 'react-router-dom';
 
@@ -32,7 +32,7 @@ interface Character {
   name: string;
   race: string;
   guild: string;
-  branch: string; // Added branch
+  branch: string;
   created_at: string;
   retired_at: string | null;
   crowns: number;
@@ -46,6 +46,7 @@ interface CharacterItem {
   description: string | null;
   quantity: number;
   acquired_at: string;
+  category: string; // Added category
 }
 
 const CharacterInventory = () => {
@@ -58,8 +59,9 @@ const CharacterInventory = () => {
   const [selectedItemToSell, setSelectedItemToSell] = useState<CharacterItem | null>(null);
   const [sellCrowns, setSellCrowns] = useState(0);
   const [sellPennies, setSellPennies] = useState(0);
-  const [sellCategory, setSellCategory] = useState('misc'); // New state for category
+  const [sellCategory, setSellCategory] = useState('misc');
   const [isSelling, setIsSelling] = useState(false);
+  const [filterCategory, setFilterCategory] = useState('all'); // New state for category filter in inventory
   const navigate = useNavigate();
 
   const fetchCharacterAndItems = async () => {
@@ -83,11 +85,16 @@ const CharacterInventory = () => {
       setCharacter(charData || null);
 
       if (charData) {
-        const { data: itemsData, error: itemsError } = await supabase
+        let query = supabase
           .from('character_items')
           .select('*')
-          .eq('character_id', charData.id)
-          .order('acquired_at', { ascending: false });
+          .eq('character_id', charData.id);
+        
+        if (filterCategory !== 'all') {
+          query = query.eq('category', filterCategory);
+        }
+
+        const { data: itemsData, error: itemsError } = await query.order('acquired_at', { ascending: false });
 
         if (itemsError) {
           throw itemsError;
@@ -105,7 +112,7 @@ const CharacterInventory = () => {
 
   useEffect(() => {
     fetchCharacterAndItems();
-  }, [session]);
+  }, [session, filterCategory]); // Re-fetch when filterCategory changes
 
   const handleRetireCharacter = async () => {
     if (!character?.id) {
@@ -224,7 +231,7 @@ const CharacterInventory = () => {
           character_item_id: selectedItemToSell.id,
           price_crowns: sellCrowns,
           price_pennies: sellPennies,
-          category: sellCategory, // Pass the selected category
+          category: sellCategory,
         }),
       });
 
@@ -237,7 +244,7 @@ const CharacterInventory = () => {
       setSelectedItemToSell(null);
       setSellCrowns(0);
       setSellPennies(0);
-      setSellCategory('misc'); // Reset category
+      setSellCategory('misc');
       fetchCharacterAndItems(); // Refresh inventory
     } catch (error: any) {
       showError(`Failed to sell item: ${error.message}`);
@@ -274,10 +281,21 @@ const CharacterInventory = () => {
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-4">
       <div className="max-w-md mx-auto">
-        <div className="flex justify-end mb-4">
+        <div className="flex justify-between items-center mb-4">
           <Button asChild variant="outline">
             <Link to="/home">Home</Link>
           </Button>
+          <Select onValueChange={setFilterCategory} value={filterCategory}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by Category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              <SelectItem value="weapons">Weapons</SelectItem>
+              <SelectItem value="armour">Armour</SelectItem>
+              <SelectItem value="misc">Misc</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <Card className="w-full mb-6">
           <CardHeader>
@@ -294,7 +312,7 @@ const CharacterInventory = () => {
               Guild: {character.guild.charAt(0).toUpperCase() + character.guild.slice(1)}
             </p>
             <p className="text-md text-gray-700 dark:text-gray-300 mt-2">
-              Branch: {character.branch} {/* Display branch */}
+              Branch: {character.branch}
             </p>
             <p className="text-md text-gray-700 dark:text-gray-300 mt-2">
               Crowns: {character.crowns}
@@ -329,7 +347,6 @@ const CharacterInventory = () => {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-            {/* New Character Death Button */}
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" className="w-full">Character Death</Button>
@@ -368,6 +385,9 @@ const CharacterInventory = () => {
                       {item.description && (
                         <p className="text-sm text-gray-700 dark:text-gray-300">{item.description}</p>
                       )}
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Category: {item.category.charAt(0).toUpperCase() + item.category.slice(1)}
+                      </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         Acquired on: {new Date(item.acquired_at).toLocaleDateString()}
                       </p>
