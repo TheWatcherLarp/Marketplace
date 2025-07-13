@@ -5,6 +5,7 @@ import { useSession } from '@/components/SessionContextProvider';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { showError } from '@/utils/toast';
+import Header from '@/components/Header'; // Import the new Header component
 
 // Define interfaces for data
 interface Character {
@@ -90,7 +91,8 @@ const HomePage = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-900 p-4 pt-20"> {/* Added pt-20 for header spacing */}
+      <Header /> {/* Add the Header component */}
       <Card className="w-full max-w-md text-center mb-6">
         <CardHeader>
           <CardTitle className="text-3xl">Hello, Adventurer!</CardTitle>
