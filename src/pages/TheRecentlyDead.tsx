@@ -101,7 +101,8 @@ const TheRecentlyDead = () => {
                 </CardHeader>
                 <CardContent className="flex-grow">
                   <p className="text-sm text-gray-700 dark:text-gray-300">Branch: {character.branch || 'N/A'}</p>
-                  {/* Removed Crowns, Pennies, and Died date */}
+                  <p className="text-sm text-gray-700 dark:text-gray-300">Died On: {new Date(character.died_at).toLocaleDateString()}</p>
+                  {/* Removed Crowns, Pennies */}
                 </CardContent>
               </Card>
             ))}
