@@ -59,7 +59,7 @@ const Marketplace = () => {
         .from('characters')
         .select('id, name, crowns, pennies')
         .eq('user_id', session.user.id)
-        .is('retired_at', null)
+        .is('retired_at', null) // Only fetch active characters
         .single();
 
       if (characterError && characterError.code !== 'PGRST116') { // PGRST116 means no rows found
@@ -85,18 +85,36 @@ const Marketplace = () => {
           throw itemsError;
         }
 
-        // Fetch all active characters to map seller_id to character name
-        const { data: charactersData, error: charactersError } = await supabase
+        // Fetch ALL characters (active, retired, and dead) to map seller_id to character name
+        // This ensures 'Crafted By' remains consistent even if a character is retired/killed
+        const { data: allCharactersData, error: allCharactersError } = await supabase
           .from('characters')
-          .select('user_id, name')
-          .is('retired_at', null);
+          .select('user_id, name');
 
-        if (charactersError) {
-          throw charactersError;
-        }
+        const { data: retiredCharactersData, error: retiredCharactersError } = await supabase
+          .from('retired_characters')
+          .select('user_id, name');
+
+        const { data: deadCharactersData, error: deadCharactersError } = await supabase
+          .from('dead_characters')
+          .select('user_id, name');
+
+        if (allCharactersError) throw allCharactersError;
+        if (retiredCharactersError) throw retiredCharactersError;
+        if (deadCharactersError) throw deadCharactersError;
 
         const characterMap = new Map<string, string>();
-        charactersData.forEach(char => {
+        
+        // Add active characters
+        (allCharactersData || []).forEach(char => {
+          characterMap.set(char.user_id, char.name);
+        });
+        // Add retired characters (override if active character has same user_id, but typically won't happen)
+        (retiredCharactersData || []).forEach(char => {
+          characterMap.set(char.user_id, char.name);
+        });
+        // Add dead characters (override if active/retired character has same user_id)
+        (deadCharactersData || []).forEach(char => {
           characterMap.set(char.user_id, char.name);
         });
 
