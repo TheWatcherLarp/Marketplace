@@ -29,6 +29,9 @@ const Header = () => {
             <DropdownMenuItem asChild>
               <Link to="/branch-members">Branch Members</Link>
             </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/the-recently-dead">The Recently Dead</Link>
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
