@@ -19,18 +19,14 @@ import { showError, showSuccess } from '@/utils/toast';
 import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 
-interface MarketplaceItem {
-  id: string;
+interface StaticShopItem {
+  id: string; // Unique identifier for static item
   name: string;
   crowns: number;
   pennies: number;
-  seller_id: string;
-  seller_character_id: string | null;
-  listed_at: string;
   category: string;
-  sellerCharacterName?: string;
-  crafter_user_id: string | null;
-  crafterCharacterName?: string;
+  description: string;
+  quantity: number; // Quantity to add to inventory per purchase
 }
 
 interface Character {
@@ -39,25 +35,83 @@ interface Character {
   crowns: number;
   pennies: number;
   branch: string;
-  user_id: string; // Added user_id for filtering
+  user_id: string;
 }
+
+// Define the static list of items available in the local shop
+const staticLocalItems: StaticShopItem[] = [
+  {
+    id: 'shop-item-1',
+    name: 'Basic Healing Potion',
+    crowns: 1,
+    pennies: 5,
+    category: 'consumable',
+    description: 'Restores a small amount of health.',
+    quantity: 1,
+  },
+  {
+    id: 'shop-item-2',
+    name: 'Iron Sword',
+    crowns: 5,
+    pennies: 0,
+    category: 'weapons',
+    description: 'A sturdy, basic iron sword.',
+    quantity: 1,
+  },
+  {
+    id: 'shop-item-3',
+    name: 'Leather Armor',
+    crowns: 8,
+    pennies: 0,
+    category: 'armour',
+    description: 'Lightweight leather armor for protection.',
+    quantity: 1,
+  },
+  {
+    id: 'shop-item-4',
+    name: 'Torch',
+    crowns: 0,
+    pennies: 8,
+    category: 'misc',
+    description: 'Provides light in dark places.',
+    quantity: 1,
+  },
+  {
+    id: 'shop-item-5',
+    name: 'Rope (50ft)',
+    crowns: 0,
+    pennies: 10,
+    category: 'misc',
+    description: 'Essential for climbing and tying things.',
+    quantity: 1,
+  },
+  {
+    id: 'shop-item-6',
+    name: 'Small Backpack',
+    crowns: 2,
+    pennies: 0,
+    category: 'misc',
+    description: 'Increases carrying capacity slightly.',
+    quantity: 1,
+  },
+];
 
 const LocalMarketplace = () => {
   const { session } = useSession();
-  const [items, setItems] = useState<MarketplaceItem[]>([]);
+  const [items, setItems] = useState<StaticShopItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCharacter, setActiveCharacter] = useState<Character | null>(null);
   const [isBuying, setIsBuying] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
 
-  const fetchLocalMarketItems = async () => {
+  const fetchCharacterAndSetItems = async () => {
     if (!session?.user?.id) {
       setLoading(false);
       return;
     }
 
     try {
-      // Fetch current user's active character to get their branch
+      // Fetch current user's active character
       const { data: character, error: characterError } = await supabase
         .from('characters')
         .select('id, name, crowns, pennies, branch, user_id')
@@ -77,56 +131,12 @@ const LocalMarketplace = () => {
 
       setActiveCharacter(character);
 
-      // Fetch all active characters to map user/character IDs to branches
-      const { data: allActiveCharacters, error: allActiveCharactersError } = await supabase
-        .from('characters')
-        .select('id, user_id, name, branch')
-        .is('retired_at', null);
-
-      if (allActiveCharactersError) throw allActiveCharactersError;
-
-      const characterIdToBranchMap = new Map<string, string>();
-      const userIdToBranchMap = new Map<string, string>();
-      const characterIdToNameMap = new Map<string, string>();
-      const userIdToNameMap = new Map<string, string>();
-
-      (allActiveCharacters || []).forEach(char => {
-        characterIdToBranchMap.set(char.id, char.branch);
-        userIdToBranchMap.set(char.user_id, char.branch);
-        characterIdToNameMap.set(char.id, char.name);
-        userIdToNameMap.set(char.user_id, char.name);
-      });
-
-      // Fetch all marketplace items
-      let query = supabase
-        .from('marketplace_items')
-        .select('*, seller_character_id');
-
-      if (selectedCategory !== 'all') {
-        query = query.eq('category', selectedCategory);
-      }
-
-      const { data: marketplaceItems, error: itemsError } = await query.order('listed_at', { ascending: false });
-
-      if (itemsError) {
-        throw itemsError;
-      }
-
-      // Filter items to only show those from the same branch
-      const filteredItems = (marketplaceItems || []).filter(item => {
-        const sellerBranch = item.seller_character_id
-          ? characterIdToBranchMap.get(item.seller_character_id)
-          : userIdToBranchMap.get(item.seller_id);
-        return sellerBranch === character.branch;
-      });
-
-      const enrichedItems = filteredItems.map(item => ({
-        ...item,
-        sellerCharacterName: item.seller_character_id ? characterIdToNameMap.get(item.seller_character_id) || 'Unknown Adventurer' : userIdToNameMap.get(item.seller_id) || 'Unknown Adventurer',
-        crafterCharacterName: item.crafter_user_id ? userIdToNameMap.get(item.crafter_user_id) || 'Unknown Crafter' : 'Unknown Crafter',
-      }));
-
-      setItems(enrichedItems);
+      // Filter static items by selected category
+      const filteredItems = selectedCategory === 'all'
+        ? staticLocalItems
+        : staticLocalItems.filter(item => item.category === selectedCategory);
+      
+      setItems(filteredItems);
 
     } catch (error: any) {
       showError(`Error loading local marketplace: ${error.message}`);
@@ -136,10 +146,10 @@ const LocalMarketplace = () => {
   };
 
   useEffect(() => {
-    fetchLocalMarketItems();
+    fetchCharacterAndSetItems();
   }, [session, selectedCategory]);
 
-  const handleBuyItem = async (item: MarketplaceItem) => {
+  const handleBuyItem = async (item: StaticShopItem) => {
     if (!activeCharacter) {
       showError('You need an active character to buy items.');
       return;
@@ -147,19 +157,46 @@ const LocalMarketplace = () => {
 
     setIsBuying(true);
     try {
-      const { data, error } = await supabase.functions.invoke('buy-item', {
-        body: JSON.stringify({
-          marketplace_item_id: item.id,
-          buyer_character_id: activeCharacter.id,
-        }),
-      });
+      const totalItemPennies = (item.crowns * 12) + item.pennies;
+      const totalBuyerPennies = (activeCharacter.crowns * 12) + activeCharacter.pennies;
 
-      if (error) {
-        throw error;
+      if (totalBuyerPennies < totalItemPennies) {
+        showError('Not enough currency to purchase this item.');
+        return;
       }
 
-      showSuccess(data.message || `Successfully purchased ${item.name}!`);
-      fetchLocalMarketItems(); // Refresh the list
+      // Calculate new currency balance
+      const newTotalPennies = totalBuyerPennies - totalItemPennies;
+      const newCrowns = Math.floor(newTotalPennies / 12);
+      const newPennies = newTotalPennies % 12;
+
+      // Update character's currency
+      const { error: updateCharError } = await supabase
+        .from('characters')
+        .update({ crowns: newCrowns, pennies: newPennies })
+        .eq('id', activeCharacter.id);
+
+      if (updateCharError) {
+        throw updateCharError;
+      }
+
+      // Add item to character's inventory
+      const { error: insertItemError } = await supabase
+        .from('character_items')
+        .insert({
+          character_id: activeCharacter.id,
+          item_name: item.name,
+          quantity: item.quantity,
+          // crafter_user_id is null for shop items
+        });
+
+      if (insertItemError) {
+        throw insertItemError;
+      }
+
+      showSuccess(`Successfully purchased ${item.name}!`);
+      // Refresh character data to show updated currency
+      fetchCharacterAndSetItems();
     } catch (error: any) {
       showError(`Failed to buy item: ${error.message}`);
     } finally {
@@ -237,6 +274,7 @@ const LocalMarketplace = () => {
                 <SelectItem value="all">All Categories</SelectItem>
                 <SelectItem value="weapons">Weapons</SelectItem>
                 <SelectItem value="armour">Armour</SelectItem>
+                <SelectItem value="consumable">Consumables</SelectItem>
                 <SelectItem value="misc">Misc</SelectItem>
               </SelectContent>
             </Select>
@@ -244,7 +282,7 @@ const LocalMarketplace = () => {
         </div>
 
         {items.length === 0 ? (
-          <p className="text-center text-gray-600 dark:text-gray-400">No items currently listed in your branch's market.</p>
+          <p className="text-center text-gray-600 dark:text-gray-400">No items available in this category.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {items.map((item) => (
@@ -260,15 +298,7 @@ const LocalMarketplace = () => {
                     Category: {item.category.charAt(0).toUpperCase() + item.category.slice(1)}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Sold By: {item.sellerCharacterName}
-                  </p>
-                  {item.crafterCharacterName && item.crafterCharacterName !== item.sellerCharacterName && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Crafted By: {item.crafterCharacterName}
-                    </p>
-                  )}
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Listed on: {new Date(item.listed_at).toLocaleDateString()}
+                    {item.description}
                   </p>
                 </CardContent>
                 <CardFooter className="pt-4">
@@ -276,9 +306,9 @@ const LocalMarketplace = () => {
                     <AlertDialogTrigger asChild>
                       <Button
                         className="w-full"
-                        disabled={isBuying || item.seller_id === session?.user?.id} // Disable if buying or if it's the current user's item
+                        disabled={isBuying}
                       >
-                        {item.seller_id === session?.user?.id ? 'Your Item' : 'Buy Item'}
+                        Buy Item
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
