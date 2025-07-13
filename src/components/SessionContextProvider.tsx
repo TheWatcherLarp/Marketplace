@@ -12,7 +12,7 @@ const SessionContext = createContext<SessionContextType | undefined>(undefined);
 
 export const SessionContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true); // Fixed: Added useState()
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -42,7 +42,7 @@ export const SessionContextProvider: React.FC<{ children: React.ReactNode }> = (
       const isCreateCharacterPage = currentPath === '/create-character';
       
       // Define paths that an authenticated user with a character can visit
-      const allowedAuthPaths = ['/', '/home', '/character-inventory', '/marketplace', '/branch-members'];
+      const allowedAuthPaths = ['/', '/home', '/character-inventory', '/marketplace', '/branch-members', '/the-recently-dead'];
 
       if (session) {
         // User is logged in
