@@ -46,6 +46,7 @@ const Marketplace = () => {
   const [hasCharacter, setHasCharacter] = useState(false);
   const [activeCharacter, setActiveCharacter] = useState<Character | null>(null);
   const [isBuying, setIsBuying] = useState(false);
+  const [isStocking, setIsStocking] = useState(false); // New state for stocking
   const [selectedCategory, setSelectedCategory] = useState('all'); // New state for category filter
 
   const checkCharacterAndFetchItems = async () => {
@@ -164,6 +165,32 @@ const Marketplace = () => {
     }
   };
 
+  const handleStockBandages = async () => {
+    setIsStocking(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('add-shop-item', {
+        body: JSON.stringify({
+          name: 'Bandages',
+          crowns: 0,
+          pennies: 4,
+          category: 'misc',
+          quantity: 10, // Add 10 bandages at a time
+        }),
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      showSuccess(data.message || 'Bandages successfully stocked!');
+      checkCharacterAndFetchItems(); // Refresh marketplace
+    } catch (error: any) {
+      showError(`Failed to stock bandages: ${error.message}`);
+    } finally {
+      setIsStocking(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
@@ -236,6 +263,9 @@ const Marketplace = () => {
                   <SelectItem value="misc">Misc</SelectItem>
                 </SelectContent>
               </Select>
+            <Button onClick={handleStockBandages} disabled={isStocking}>
+              {isStocking ? 'Stocking...' : 'Stock Bandages'}
+            </Button>
             <Button asChild variant="outline">
               <Link to="/home">Home</Link>
             </Button>
