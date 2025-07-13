@@ -14,6 +14,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { showError, showSuccess } from '@/utils/toast';
 import { useNavigate, Link } from 'react-router-dom';
 
@@ -40,54 +49,58 @@ interface CharacterItem {
 const CharacterInventory = () => {
   const { session } = useSession();
   const [character, setCharacter] = useState<Character | null>(null);
-  const [characterItems, setCharacterItems] = useState<CharacterItem[]>([]); // New state for items
+  const [characterItems, setCharacterItems] = useState<CharacterItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isUpdatingPennies, setIsUpdatingPennies] = useState(false);
+  const [showSellDialog, setShowSellDialog] = useState(false);
+  const [selectedItemToSell, setSelectedItemToSell] = useState<CharacterItem | null>(null);
+  const [sellCrowns, setSellCrowns] = useState(0);
+  const [sellPennies, setSellPennies] = useState(0);
+  const [isSelling, setIsSelling] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchCharacterAndItems = async () => {
-      if (!session?.user?.id) {
-        setLoading(false);
-        return;
+  const fetchCharacterAndItems = async () => {
+    if (!session?.user?.id) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const { data: charData, error: charError } = await supabase
+        .from('characters')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .is('retired_at', null)
+        .single();
+
+      if (charError && charError.code !== 'PGRST116') {
+        throw charError;
       }
 
-      try {
-        const { data: charData, error: charError } = await supabase
-          .from('characters')
+      setCharacter(charData || null);
+
+      if (charData) {
+        const { data: itemsData, error: itemsError } = await supabase
+          .from('character_items')
           .select('*')
-          .eq('user_id', session.user.id)
-          .is('retired_at', null)
-          .single();
+          .eq('character_id', charData.id)
+          .order('acquired_at', { ascending: false });
 
-        if (charError && charError.code !== 'PGRST116') {
-          throw charError;
+        if (itemsError) {
+          throw itemsError;
         }
-
-        setCharacter(charData || null);
-
-        if (charData) {
-          // Fetch items for the fetched character
-          const { data: itemsData, error: itemsError } = await supabase
-            .from('character_items')
-            .select('*')
-            .eq('character_id', charData.id)
-            .order('acquired_at', { ascending: false });
-
-          if (itemsError) {
-            throw itemsError;
-          }
-          setCharacterItems(itemsData || []);
-        } else {
-          setCharacterItems([]); // No character, no items
-        }
-      } catch (error: any) {
-        showError(`Error fetching character or items: ${error.message}`);
-      } finally {
-        setLoading(false);
+        setCharacterItems(itemsData || []);
+      } else {
+        setCharacterItems([]);
       }
-    };
+    } catch (error: any) {
+      showError(`Error fetching character or items: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchCharacterAndItems();
   }, [session]);
 
@@ -153,6 +166,48 @@ const CharacterInventory = () => {
       showError(`Failed to add pennies: ${error.message}`);
     } finally {
       setIsUpdatingPennies(false);
+    }
+  };
+
+  const handleSellItem = async () => {
+    if (!selectedItemToSell || !character?.id) {
+      showError('No item selected or character not found.');
+      return;
+    }
+
+    if (sellCrowns < 0 || sellPennies < 0) {
+      showError('Price cannot be negative.');
+      return;
+    }
+    if (sellCrowns === 0 && sellPennies === 0) {
+      showError('Price cannot be zero.');
+      return;
+    }
+
+    setIsSelling(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('sell-item', {
+        body: JSON.stringify({
+          character_item_id: selectedItemToSell.id,
+          price_crowns: sellCrowns,
+          price_pennies: sellPennies,
+        }),
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      showSuccess(data.message || 'Item successfully listed on marketplace!');
+      setShowSellDialog(false);
+      setSelectedItemToSell(null);
+      setSellCrowns(0);
+      setSellPennies(0);
+      fetchCharacterAndItems(); // Refresh inventory
+    } catch (error: any) {
+      showError(`Failed to sell item: ${error.message}`);
+    } finally {
+      setIsSelling(false);
     }
   };
 
@@ -249,14 +304,26 @@ const CharacterInventory = () => {
             ) : (
               <div className="space-y-4">
                 {characterItems.map((item) => (
-                  <div key={item.id} className="border p-3 rounded-md bg-gray-50 dark:bg-gray-700">
-                    <h4 className="font-semibold text-lg text-gray-900 dark:text-white">{item.item_name} (x{item.quantity})</h4>
-                    {item.description && (
-                      <p className="text-sm text-gray-700 dark:text-gray-300">{item.description}</p>
-                    )}
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Acquired on: {new Date(item.acquired_at).toLocaleDateString()}
-                    </p>
+                  <div key={item.id} className="border p-3 rounded-md bg-gray-50 dark:bg-gray-700 flex justify-between items-center">
+                    <div>
+                      <h4 className="font-semibold text-lg text-gray-900 dark:text-white">{item.item_name} (x{item.quantity})</h4>
+                      {item.description && (
+                        <p className="text-sm text-gray-700 dark:text-gray-300">{item.description}</p>
+                      )}
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Acquired on: {new Date(item.acquired_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedItemToSell(item);
+                        setShowSellDialog(true);
+                      }}
+                    >
+                      Sell
+                    </Button>
                   </div>
                 ))}
               </div>
@@ -264,6 +331,56 @@ const CharacterInventory = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Sell Item Dialog */}
+      <Dialog open={showSellDialog} onOpenChange={setShowSellDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Sell {selectedItemToSell?.item_name}</DialogTitle>
+            <DialogDescription>
+              Set the price for your item in Crowns and Pennies.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="crowns" className="text-right">
+                Crowns
+              </label>
+              <Input
+                id="crowns"
+                type="number"
+                value={sellCrowns}
+                onChange={(e) => setSellCrowns(Math.max(0, parseInt(e.target.value) || 0))}
+                className="col-span-3"
+                min="0"
+                disabled={isSelling}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="pennies" className="text-right">
+                Pennies
+              </label>
+              <Input
+                id="pennies"
+                type="number"
+                value={sellPennies}
+                onChange={(e) => setSellPennies(Math.max(0, parseInt(e.target.value) || 0))}
+                className="col-span-3"
+                min="0"
+                disabled={isSelling}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSellDialog(false)} disabled={isSelling}>
+              Cancel
+            </Button>
+            <Button onClick={handleSellItem} disabled={isSelling}>
+              {isSelling ? 'Listing...' : 'List Item'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

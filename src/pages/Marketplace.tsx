@@ -3,7 +3,18 @@ import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/components/SessionContextProvider';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { showError } from '@/utils/toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { showError, showSuccess } from '@/utils/toast';
 import { Link } from 'react-router-dom';
 
 interface MarketplaceItem {
@@ -14,12 +25,14 @@ interface MarketplaceItem {
   pennies: number;
   seller_id: string;
   listed_at: string;
-  sellerCharacterName?: string; // Added for displaying the character's name
+  sellerCharacterName?: string;
 }
 
 interface Character {
-  user_id: string;
+  id: string;
   name: string;
+  crowns: number;
+  pennies: number;
 }
 
 const Marketplace = () => {
@@ -27,75 +40,107 @@ const Marketplace = () => {
   const [items, setItems] = useState<MarketplaceItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasCharacter, setHasCharacter] = useState(false);
+  const [activeCharacter, setActiveCharacter] = useState<Character | null>(null);
+  const [isBuying, setIsBuying] = useState(false);
+
+  const checkCharacterAndFetchItems = async () => {
+    if (!session?.user?.id) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Check if the user has an active character and fetch its currency
+      const { data: character, error: characterError } = await supabase
+        .from('characters')
+        .select('id, name, crowns, pennies')
+        .eq('user_id', session.user.id)
+        .is('retired_at', null)
+        .single();
+
+      if (characterError && characterError.code !== 'PGRST116') {
+        throw characterError;
+      }
+
+      if (character) {
+        setHasCharacter(true);
+        setActiveCharacter(character);
+
+        // Fetch marketplace items
+        const { data: marketplaceItems, error: itemsError } = await supabase
+          .from('marketplace_items')
+          .select('*')
+          .order('listed_at', { ascending: false });
+
+        if (itemsError) {
+          throw itemsError;
+        }
+
+        // Fetch all active characters to map seller_id to character name
+        const { data: charactersData, error: charactersError } = await supabase
+          .from('characters')
+          .select('user_id, name')
+          .is('retired_at', null);
+
+        if (charactersError) {
+          throw charactersError;
+        }
+
+        const characterMap = new Map<string, string>();
+        charactersData.forEach(char => {
+          characterMap.set(char.user_id, char.name);
+        });
+
+        // Enrich marketplace items with seller's character name
+        const enrichedItems = (marketplaceItems || []).map(item => ({
+          ...item,
+          sellerCharacterName: characterMap.get(item.seller_id) || 'Unknown Adventurer',
+        }));
+        
+        setItems(enrichedItems);
+
+      } else {
+        setHasCharacter(false);
+        setActiveCharacter(null);
+      }
+    } catch (error: any) {
+      showError(`Error loading marketplace: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const checkCharacterAndFetchItems = async () => {
-      if (!session?.user?.id) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        // Check if the user has an active character
-        const { data: character, error: characterError } = await supabase
-          .from('characters')
-          .select('id')
-          .eq('user_id', session.user.id)
-          .is('retired_at', null)
-          .single();
-
-        if (characterError && characterError.code !== 'PGRST116') {
-          throw characterError;
-        }
-
-        if (character) {
-          setHasCharacter(true);
-          
-          // Fetch marketplace items
-          const { data: marketplaceItems, error: itemsError } = await supabase
-            .from('marketplace_items')
-            .select('*')
-            .order('listed_at', { ascending: false });
-
-          if (itemsError) {
-            throw itemsError;
-          }
-
-          // Fetch all active characters to map seller_id to character name
-          const { data: charactersData, error: charactersError } = await supabase
-            .from('characters')
-            .select('user_id, name')
-            .is('retired_at', null); // Only fetch active characters
-
-          if (charactersError) {
-            throw charactersError;
-          }
-
-          const characterMap = new Map<string, string>();
-          charactersData.forEach(char => {
-            characterMap.set(char.user_id, char.name);
-          });
-
-          // Enrich marketplace items with seller's character name
-          const enrichedItems = (marketplaceItems || []).map(item => ({
-            ...item,
-            sellerCharacterName: characterMap.get(item.seller_id) || 'Unknown Adventurer',
-          }));
-          
-          setItems(enrichedItems);
-
-        } else {
-          setHasCharacter(false);
-        }
-      } catch (error: any) {
-        showError(`Error loading marketplace: ${error.message}`);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     checkCharacterAndFetchItems();
   }, [session]);
+
+  const handleBuyItem = async (item: MarketplaceItem) => {
+    if (!activeCharacter) {
+      showError('You need an active character to buy items.');
+      return;
+    }
+
+    setIsBuying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('buy-item', {
+        body: JSON.stringify({
+          marketplace_item_id: item.id,
+          buyer_character_id: activeCharacter.id,
+        }),
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      showSuccess(data.message || `Successfully purchased ${item.name}!`);
+      checkCharacterAndFetchItems(); // Refresh marketplace and character data
+    } catch (error: any) {
+      showError(`Failed to buy item: ${error.message}`);
+    } finally {
+      setIsBuying(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -179,7 +224,31 @@ const Marketplace = () => {
                     Listed on: {new Date(item.listed_at).toLocaleDateString()}
                   </p>
                 </CardContent>
-                {/* Add buy/interact button here later */}
+                <CardFooter className="pt-4">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button className="w-full" disabled={isBuying || item.seller_id === session?.user?.id}>
+                        {item.seller_id === session?.user?.id ? 'Your Item' : 'Buy Item'}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Confirm Purchase</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to buy "{item.name}" for {item.crowns} Crowns and {item.pennies} Pennies?
+                          <br />
+                          Your current balance: {activeCharacter?.crowns} Crowns, {activeCharacter?.pennies} Pennies.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel disabled={isBuying}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleBuyItem(item)} disabled={isBuying}>
+                          {isBuying ? 'Purchasing...' : 'Confirm Purchase'}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </CardFooter>
               </Card>
             ))}
           </div>
