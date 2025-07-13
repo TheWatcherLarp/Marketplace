@@ -53,7 +53,7 @@ const HomePage = () => {
           .is('retired_at', null)
           .single();
 
-        if (charError && charError.code !== 'PGRST116') {
+        if (charError && charError.code !== 'PGRST116') { // PGRST116 means no rows found
           throw charError;
         }
         setCharacter(charData || null);
@@ -102,9 +102,17 @@ const HomePage = () => {
             <>
               <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200">Your Active Character:</h3>
               <p className="text-lg text-gray-700 dark:text-gray-300">Name: {character.name}</p>
-              <p className="text-md text-gray-600 dark:text-gray-400">Race: {character.race.charAt(0).toUpperCase() + character.race.slice(1)}</p>
-              <p className="text-md text-gray-600 dark:text-gray-400">Guild: {character.guild.charAt(0).toUpperCase() + character.guild.slice(1)}</p>
-              <p className="text-md text-gray-600 dark:text-gray-400">Branch: {character.branch}</p> {/* Display branch */}
+              <p className="text-md text-gray-600 dark:text-gray-400">
+                Race: {typeof character.race === 'string' && character.race
+                  ? character.race.charAt(0).toUpperCase() + character.race.slice(1)
+                  : 'N/A'}
+              </p>
+              <p className="text-md text-gray-600 dark:text-gray-400">
+                Guild: {typeof character.guild === 'string' && character.guild
+                  ? character.guild.charAt(0).toUpperCase() + character.guild.slice(1)
+                  : 'N/A'}
+              </p>
+              <p className="text-md text-gray-600 dark:text-gray-400">Branch: {character.branch || 'N/A'}</p> {/* Display branch */}
               <p className="text-md text-gray-600 dark:text-gray-400">Crowns: {character.crowns}</p>
               <p className="text-md text-gray-600 dark:text-gray-400">Pennies: {character.pennies}</p>
               <Button asChild className="w-full">
