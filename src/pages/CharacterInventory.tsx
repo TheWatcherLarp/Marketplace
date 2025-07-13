@@ -27,6 +27,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { showError, showSuccess } from '@/utils/toast';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header'; // Import the new Header component
+import { Badge } from '@/components/ui/badge'; // Import Badge component
 
 interface Character {
   id: string;
@@ -38,22 +39,30 @@ interface Character {
   retired_at: string | null;
   crowns: number;
   pennies: number;
-  guild_rank: string; // Added guild_rank
+  guild_rank: string;
 }
 
 interface CharacterItem {
   id: string;
   character_id: string;
   item_name: string;
-  quantity: number; // This quantity is for the character's inventory stack
+  quantity: number;
   acquired_at: string;
   crafter_user_id: string | null;
+}
+
+interface CharacterPermit {
+  id: string;
+  character_id: string;
+  permit_type: string;
+  created_at: string;
 }
 
 const CharacterInventory = () => {
   const { session } = useSession();
   const [character, setCharacter] = useState<Character | null>(null);
   const [characterItems, setCharacterItems] = useState<CharacterItem[]>([]);
+  const [characterPermits, setCharacterPermits] = useState<CharacterPermit[]>([]); // New state for permits
   const [loading, setLoading] = useState(true);
   const [isUpdatingPennies, setIsUpdatingPennies] = useState(false);
   const [showSellDialog, setShowSellDialog] = useState(false);
@@ -61,7 +70,7 @@ const CharacterInventory = () => {
   const [sellCrowns, setSellCrowns] = useState(0);
   const [sellPennies, setSellPennies] = useState(0);
   const [sellCategory, setSellCategory] = useState('misc');
-  const [sellQuantity, setSellQuantity] = useState(1); // New state for quantity to sell
+  const [sellQuantity, setSellQuantity] = useState(1);
   const [isSelling, setIsSelling] = useState(false);
   const navigate = useNavigate();
 
@@ -96,8 +105,21 @@ const CharacterInventory = () => {
           throw itemsError;
         }
         setCharacterItems(itemsData || []);
+
+        // Fetch permits for the character
+        const { data: permitsData, error: permitsError } = await supabase
+          .from('character_permits')
+          .select('*')
+          .eq('character_id', charData.id);
+
+        if (permitsError) {
+          throw permitsError;
+        }
+        setCharacterPermits(permitsData || []);
+
       } else {
         setCharacterItems([]);
+        setCharacterPermits([]);
       }
     } catch (error: any) {
       showError(`Error fetching character or items: ${error.message}`);
@@ -232,7 +254,7 @@ const CharacterInventory = () => {
           price_crowns: sellCrowns,
           price_pennies: sellPennies,
           category: sellCategory,
-          quantity_to_sell: sellQuantity, // Pass the new parameter
+          quantity_to_sell: sellQuantity,
         }),
       });
 
@@ -246,8 +268,8 @@ const CharacterInventory = () => {
       setSellCrowns(0);
       setSellPennies(0);
       setSellCategory('misc');
-      setSellQuantity(1); // Reset sell quantity
-      fetchCharacterAndItems(); // Refresh inventory
+      setSellQuantity(1);
+      fetchCharacterAndItems();
     } catch (error: any) {
       showError(`Failed to sell item: ${error.message}`);
     } finally {
@@ -281,8 +303,8 @@ const CharacterInventory = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 pt-20 p-4"> {/* Added pt-20 for header spacing */}
-      <Header /> {/* Add the Header component */}
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 pt-20 p-4">
+      <Header />
       <div className="max-w-md mx-auto">
         <Card className="w-full mb-6">
           <CardHeader>
@@ -316,6 +338,20 @@ const CharacterInventory = () => {
             <p className="text-md text-gray-700 dark:text-gray-300 mt-2">
               Pennies: {character.pennies}
             </p>
+            <div className="mt-4">
+              <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Permits:</h4>
+              {characterPermits.length === 0 ? (
+                <p className="text-sm text-gray-600 dark:text-gray-400">No permits acquired.</p>
+              ) : (
+                <div className="flex flex-wrap justify-center gap-2">
+                  {characterPermits.map((permit) => (
+                    <Badge key={permit.id} variant="secondary" className="capitalize">
+                      {permit.permit_type} Permit
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
               Character ID: {character.id}
             </p>
@@ -387,7 +423,7 @@ const CharacterInventory = () => {
                       size="sm"
                       onClick={() => {
                         setSelectedItemToSell(item);
-                        setSellQuantity(1); // Default to 1 when opening dialog
+                        setSellQuantity(1);
                         setShowSellDialog(true);
                       }}
                     >

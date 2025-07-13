@@ -12,7 +12,7 @@ const CreateCharacter = () => {
   const [characterName, setCharacterName] = useState('');
   const [race, setRace] = useState('');
   const [guild, setGuild] = useState('');
-  const [branch, setBranch] = useState(''); // New state for branch
+  const [branch, setBranch] = useState('');
   const [loading, setLoading] = useState(true);
   const [hasExistingCharacter, setHasExistingCharacter] = useState(false);
   const navigate = useNavigate();
@@ -74,23 +74,43 @@ const CreateCharacter = () => {
       showError('Please select a character guild.');
       return;
     }
-    if (!branch) { // New validation for branch
+    if (!branch) {
       showError('Please select a branch.');
       return;
     }
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data: newCharacter, error } = await supabase
         .from('characters')
-        .insert({ user_id: session.user.id, name: characterName.trim(), race: race, guild: guild, branch: branch, crowns: 10 }) // Include branch and set initial crowns
-        .select();
+        .insert({ user_id: session.user.id, name: characterName.trim(), race: race, guild: guild, branch: branch, crowns: 10 })
+        .select('id'); // Select the ID of the newly created character
 
       if (error) {
         throw error;
       }
 
-      if (data && data.length > 0) {
+      if (newCharacter && newCharacter.length > 0) {
+        const characterId = newCharacter[0].id;
+        const permitsToInsert: { character_id: string; permit_type: string }[] = [];
+
+        if (guild === 'scout' || guild === 'mercenary') {
+          permitsToInsert.push({ character_id: characterId, permit_type: 'weapon' });
+          permitsToInsert.push({ character_id: characterId, permit_type: 'armour' });
+        }
+
+        if (permitsToInsert.length > 0) {
+          const { error: permitError } = await supabase
+            .from('character_permits')
+            .insert(permitsToInsert);
+
+          if (permitError) {
+            console.error('Error inserting permits:', permitError);
+            showError(`Character created, but failed to assign permits: ${permitError.message}`);
+            // Continue even if permit assignment fails, character is still created
+          }
+        }
+
         showSuccess(`Character '${characterName}' created successfully!`);
         navigate('/character-inventory');
       }
@@ -164,7 +184,7 @@ const CreateCharacter = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div> {/* New Select for Branch */}
+            <div>
               <label htmlFor="characterBranch" className="sr-only">Branch</label>
               <Select onValueChange={setBranch} value={branch} disabled={loading}>
                 <SelectTrigger id="characterBranch" className="w-full">
