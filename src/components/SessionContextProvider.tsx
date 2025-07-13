@@ -46,10 +46,12 @@ export const SessionContextProvider: React.FC<{ children: React.ReactNode }> = (
         // User is logged in
         if (session.user?.id) {
           try {
+            // Check for an active character (retired_at is NULL)
             const { data: character, error } = await supabase
               .from('characters')
               .select('id')
               .eq('user_id', session.user.id)
+              .is('retired_at', null) // Only fetch active characters
               .single();
 
             if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
@@ -57,12 +59,12 @@ export const SessionContextProvider: React.FC<{ children: React.ReactNode }> = (
             }
 
             if (character) {
-              // Character exists, redirect to inventory if not already there
+              // Active character exists, redirect to inventory if not already there
               if (!isCharacterInventoryPage) {
                 navigate('/character-inventory');
               }
             } else {
-              // No character, redirect to create character page if not already there
+              // No active character, redirect to create character page if not already there
               if (!isCreateCharacterPage) {
                 navigate('/create-character');
               }

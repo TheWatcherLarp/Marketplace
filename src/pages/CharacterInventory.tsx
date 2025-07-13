@@ -21,8 +21,9 @@ interface Character {
   id: string;
   name: string;
   race: string;
-  guild: string; // Add guild to the interface
+  guild: string;
   created_at: string;
+  retired_at: string | null; // Add retired_at to the interface
 }
 
 const CharacterInventory = () => {
@@ -43,6 +44,7 @@ const CharacterInventory = () => {
           .from('characters')
           .select('*')
           .eq('user_id', session.user.id)
+          .is('retired_at', null) // Only fetch active characters
           .single();
 
         if (error && error.code !== 'PGRST116') {
@@ -69,7 +71,7 @@ const CharacterInventory = () => {
     try {
       const { error } = await supabase
         .from('characters')
-        .delete()
+        .update({ retired_at: new Date().toISOString() }) // Set retired_at timestamp
         .eq('id', character.id);
 
       if (error) {
@@ -101,7 +103,7 @@ const CharacterInventory = () => {
           </CardHeader>
           <CardContent>
             <p className="text-gray-600 dark:text-gray-400">
-              It seems you don't have a character yet. Please create one!
+              It seems you don't have an active character yet. Please create one!
             </p>
           </CardContent>
         </Card>
@@ -142,7 +144,7 @@ const CharacterInventory = () => {
               <AlertDialogHeader>
                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete your character and all associated data.
+                  This action will mark your character as retired. You will no longer be able to use this character.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
