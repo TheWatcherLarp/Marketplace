@@ -1,13 +1,26 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/components/SessionContextProvider';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { showError } from '@/utils/toast';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { showError, showSuccess } from '@/utils/toast';
+import { useNavigate } from 'react-router-dom';
 
 interface Character {
   id: string;
   name: string;
-  race: string; // Add race to the interface
+  race: string;
   created_at: string;
 }
 
@@ -15,6 +28,7 @@ const CharacterInventory = () => {
   const { session } = useSession();
   const [character, setCharacter] = useState<Character | null>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchCharacter = async () => {
@@ -30,7 +44,7 @@ const CharacterInventory = () => {
           .eq('user_id', session.user.id)
           .single();
 
-        if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
+        if (error && error.code !== 'PGRST116') {
           throw error;
         }
 
@@ -44,6 +58,30 @@ const CharacterInventory = () => {
 
     fetchCharacter();
   }, [session]);
+
+  const handleRetireCharacter = async () => {
+    if (!character?.id) {
+      showError('No character to retire.');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('characters')
+        .delete()
+        .eq('id', character.id);
+
+      if (error) {
+        throw error;
+      }
+
+      showSuccess(`Character '${character.name}' has been retired.`);
+      setCharacter(null); // Clear character state
+      navigate('/create-character'); // Redirect to create character page
+    } catch (error: any) {
+      showError(`Failed to retire character: ${error.message}`);
+    }
+  };
 
   if (loading) {
     return (
@@ -91,6 +129,27 @@ const CharacterInventory = () => {
           </p>
           {/* Add more inventory details here later */}
         </CardContent>
+        <CardFooter className="flex justify-center p-6">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive">Retire Character</Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete your character and all associated data.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleRetireCharacter}>
+                  Continue
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </CardFooter>
       </Card>
     </div>
   );
