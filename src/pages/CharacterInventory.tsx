@@ -46,7 +46,7 @@ interface CharacterItem {
   description: string | null;
   quantity: number;
   acquired_at: string;
-  // Removed category as it's no longer used for display or filtering in inventory
+  category: string; // Re-added category as it's needed for selling
 }
 
 const CharacterInventory = () => {
@@ -84,7 +84,6 @@ const CharacterInventory = () => {
       setCharacter(charData || null);
 
       if (charData) {
-        // Fetch all character items without category filter
         const { data: itemsData, error: itemsError } = await supabase
           .from('character_items')
           .select('*')
@@ -214,10 +213,7 @@ const CharacterInventory = () => {
       showError('Pennies must be less than 12. Please convert 12 pennies to 1 Crown.');
       return;
     }
-    if (!sellCategory) {
-      showError('Please select a category for the item.');
-      return;
-    }
+    // No need to validate sellCategory as it's now fixed to the item's original category
 
     setIsSelling(true);
     try {
@@ -226,7 +222,7 @@ const CharacterInventory = () => {
           character_item_id: selectedItemToSell.id,
           price_crowns: sellCrowns,
           price_pennies: sellPennies,
-          category: sellCategory,
+          category: selectedItemToSell.category, // Use the item's original category
         }),
       });
 
@@ -239,7 +235,7 @@ const CharacterInventory = () => {
       setSelectedItemToSell(null);
       setSellCrowns(0);
       setSellPennies(0);
-      setSellCategory('misc');
+      // No need to reset sellCategory as it's derived from selectedItemToSell
       fetchCharacterAndItems(); // Refresh inventory
     } catch (error: any) {
       showError(`Failed to sell item: ${error.message}`);
@@ -280,7 +276,6 @@ const CharacterInventory = () => {
           <Button asChild variant="outline">
             <Link to="/home">Home</Link>
           </Button>
-          {/* Removed category filter select */}
         </div>
         <Card className="w-full mb-6">
           <CardHeader>
@@ -374,7 +369,9 @@ const CharacterInventory = () => {
                       {item.description && (
                         <p className="text-sm text-gray-700 dark:text-gray-300">{item.description}</p>
                       )}
-                      {/* Removed category display */}
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Category: {item.category.charAt(0).toUpperCase() + item.category.slice(1)}
+                      </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         Acquired on: {new Date(item.acquired_at).toLocaleDateString()}
                       </p>
@@ -384,6 +381,7 @@ const CharacterInventory = () => {
                       size="sm"
                       onClick={() => {
                         setSelectedItemToSell(item);
+                        setSellCategory(item.category); // Set the category to the item's current category
                         setShowSellDialog(true);
                       }}
                     >
@@ -403,7 +401,7 @@ const CharacterInventory = () => {
           <DialogHeader>
             <DialogTitle>Sell {selectedItemToSell?.item_name}</DialogTitle>
             <DialogDescription>
-              Set the price and category for your item.
+              Set the price for your item. The category cannot be changed.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -439,16 +437,13 @@ const CharacterInventory = () => {
               <label htmlFor="category" className="text-right">
                 Category
               </label>
-              <Select onValueChange={setSellCategory} value={sellCategory} disabled={isSelling}>
-                <SelectTrigger id="category" className="col-span-3">
-                  <SelectValue placeholder="Select a category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="weapons">Weapons</SelectItem>
-                  <SelectItem value="armour">Armour</SelectItem>
-                  <SelectItem value="misc">Misc</SelectItem>
-                </SelectContent>
-              </Select>
+              <Input
+                id="category"
+                type="text"
+                value={selectedItemToSell?.category.charAt(0).toUpperCase() + selectedItemToSell?.category.slice(1) || ''}
+                className="col-span-3"
+                disabled // Disable the input to prevent changes
+              />
             </div>
           </div>
           <DialogFooter>
