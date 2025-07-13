@@ -42,7 +42,7 @@ export const SessionContextProvider: React.FC<{ children: React.ReactNode }> = (
       const isCreateCharacterPage = currentPath === '/create-character';
       
       // Define paths that an authenticated user with a character can visit
-      const allowedAuthPaths = ['/', '/home', '/character-inventory', '/marketplace'];
+      const allowedAuthPaths = ['/', '/home', '/character-inventory', '/marketplace', '/branch-members']; // Added /branch-members
 
       if (session) {
         // User is logged in
@@ -92,7 +92,11 @@ export const SessionContextProvider: React.FC<{ children: React.ReactNode }> = (
   }, [session, loading, navigate, location.pathname]);
 
   if (loading) {
-    return <div className="flex justify-center items-center min-h-screen text-lg text-gray-700 dark:text-gray-300">Loading application...</div>;
+    return (
+      <div className="flex justify-center items-center min-h-screen text-lg text-gray-700 dark:text-gray-300">
+        Loading application...
+      </div>
+    );
   }
 
   return (
