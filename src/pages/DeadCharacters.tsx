@@ -17,6 +17,13 @@ interface DeadCharacter {
   died_at: string;
   crowns: number;
   pennies: number;
+  ownerName?: string; // Added for displaying the owner's name
+}
+
+interface Profile {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
 }
 
 const DeadCharacters = () => {
@@ -32,19 +39,40 @@ const DeadCharacters = () => {
       }
 
       try {
-        const { data, error } = await supabase
+        // Fetch all dead characters
+        const { data: charactersData, error: charactersError } = await supabase
           .from('dead_characters')
           .select('*')
-          .eq('user_id', session.user.id)
           .order('died_at', { ascending: false });
 
-        if (error) {
-          throw error;
+        if (charactersError) {
+          throw charactersError;
         }
 
-        setDeadCharacters(data || []);
+        // Fetch all profiles to get user names
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name');
+
+        if (profilesError) {
+          throw profilesError;
+        }
+
+        const profileMap = new Map<string, string>();
+        (profilesData || []).forEach((profile: Profile) => {
+          const fullName = [profile.first_name, profile.last_name].filter(Boolean).join(' ');
+          profileMap.set(profile.id, fullName || 'Unknown User');
+        });
+
+        // Enrich dead characters with owner names
+        const enrichedDeadCharacters = (charactersData || []).map(character => ({
+          ...character,
+          ownerName: profileMap.get(character.user_id) || 'Unknown User',
+        }));
+
+        setDeadCharacters(enrichedDeadCharacters);
       } catch (error: any) {
-        showError(`Error fetching dead characters: ${error.message}`);
+        showError(`Error fetching deceased characters: ${error.message}`);
         setDeadCharacters([]);
       } finally {
         setLoading(false);
@@ -71,7 +99,7 @@ const DeadCharacters = () => {
           </CardHeader>
           <CardContent>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
-              You need to be logged in to view your deceased characters.
+              You need to be logged in to view deceased characters.
             </p>
             <Button asChild>
               <Link to="/login">Go to Login</Link>
@@ -87,7 +115,7 @@ const DeadCharacters = () => {
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Your Deceased Characters
+            All Deceased Characters
           </h1>
           <Button asChild variant="outline">
             <Link to="/home">Home</Link>
@@ -95,7 +123,7 @@ const DeadCharacters = () => {
         </div>
 
         {deadCharacters.length === 0 ? (
-          <p className="text-center text-gray-600 dark:text-gray-400">You have no deceased characters.</p>
+          <p className="text-center text-gray-600 dark:text-gray-400">No deceased characters found.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {deadCharacters.map((character) => (
@@ -111,6 +139,9 @@ const DeadCharacters = () => {
                   <p className="text-sm text-gray-700 dark:text-gray-300">Crowns: {character.crowns}</p>
                   <p className="text-sm text-gray-700 dark:text-gray-300">Pennies: {character.pennies}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    Owner: {character.ownerName}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     Created: {new Date(character.created_at).toLocaleDateString()}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
