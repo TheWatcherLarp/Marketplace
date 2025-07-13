@@ -18,6 +18,7 @@ interface Character {
   retired_at: string | null;
   crowns: number;
   pennies: number;
+  guild_rank: string; // Added guild_rank
 }
 
 interface MarketplaceItem {
@@ -111,6 +112,11 @@ const HomePage = () => {
               <p className="text-md text-gray-600 dark:text-gray-400">
                 Guild: {typeof character.guild === 'string' && character.guild
                   ? character.guild.charAt(0).toUpperCase() + character.guild.slice(1)
+                  : 'N/A'}
+              </p>
+              <p className="text-md text-gray-600 dark:text-gray-400">
+                Rank: {typeof character.guild_rank === 'string' && character.guild_rank
+                  ? character.guild_rank.charAt(0).toUpperCase() + character.guild_rank.slice(1)
                   : 'N/A'}
               </p>
               <p className="text-md text-gray-600 dark:text-gray-400">Branch: {character.branch || 'N/A'}</p>
