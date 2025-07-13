@@ -8,7 +8,8 @@ import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import CreateCharacter from "./pages/CreateCharacter";
 import CharacterInventory from "./pages/CharacterInventory";
-import Marketplace from "./pages/Marketplace"; // Import the new Marketplace page
+import Marketplace from "./pages/Marketplace";
+import HomePage from "./pages/HomePage"; // Import the HomePage component
 import { SessionContextProvider } from "./components/SessionContextProvider";
 
 const queryClient = new QueryClient();
@@ -25,7 +26,8 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/create-character" element={<CreateCharacter />} />
             <Route path="/character-inventory" element={<CharacterInventory />} />
-            <Route path="/marketplace" element={<Marketplace />} /> {/* Add the marketplace route */}
+            <Route path="/marketplace" element={<Marketplace />} />
+            <Route path="/home" element={<HomePage />} /> {/* Add the home page route */}
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
