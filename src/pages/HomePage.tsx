@@ -111,7 +111,7 @@ const HomePage = () => {
                   ? character.guild.charAt(0).toUpperCase() + character.guild.slice(1)
                   : 'N/A'}
               </p>
-              <p className="text-md text-gray-600 dark:text-gray-400">Branch: {character.branch || 'N/A'}</p>
+              <p className="text-md text-gray-600 dark:text-gray-400">Branch: {character.branch || 'N/A'}</p> {/* Display branch */}
               <p className="text-md text-gray-600 dark:text-gray-400">Crowns: {character.crowns}</p>
               <p className="text-md text-gray-600 dark:text-gray-400">Pennies: {character.pennies}</p>
               <Button asChild className="w-full">
@@ -126,9 +126,6 @@ const HomePage = () => {
               <Link to="/create-character">Create New Character</Link>
             </Button>
           )}
-          <Button asChild className="w-full" variant="secondary">
-            <Link to="/generate-characters">Generate Random Characters</Link>
-          </Button>
         </CardContent>
       </Card>
 
