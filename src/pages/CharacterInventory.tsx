@@ -28,41 +28,67 @@ interface Character {
   pennies: number;
 }
 
+interface CharacterItem {
+  id: string;
+  character_id: string;
+  item_name: string;
+  description: string | null;
+  quantity: number;
+  acquired_at: string;
+}
+
 const CharacterInventory = () => {
   const { session } = useSession();
   const [character, setCharacter] = useState<Character | null>(null);
+  const [characterItems, setCharacterItems] = useState<CharacterItem[]>([]); // New state for items
   const [loading, setLoading] = useState(true);
-  const [isUpdatingPennies, setIsUpdatingPennies] = useState(false); // New state for penny update loading
+  const [isUpdatingPennies, setIsUpdatingPennies] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchCharacter = async () => {
+    const fetchCharacterAndItems = async () => {
       if (!session?.user?.id) {
         setLoading(false);
         return;
       }
 
       try {
-        const { data, error } = await supabase
+        const { data: charData, error: charError } = await supabase
           .from('characters')
           .select('*')
           .eq('user_id', session.user.id)
           .is('retired_at', null)
           .single();
 
-        if (error && error.code !== 'PGRST116') {
-          throw error;
+        if (charError && charError.code !== 'PGRST116') {
+          throw charError;
         }
 
-        setCharacter(data || null);
+        setCharacter(charData || null);
+
+        if (charData) {
+          // Fetch items for the fetched character
+          const { data: itemsData, error: itemsError } = await supabase
+            .from('character_items')
+            .select('*')
+            .eq('character_id', charData.id)
+            .order('acquired_at', { ascending: false });
+
+          if (itemsError) {
+            throw itemsError;
+          }
+          setCharacterItems(itemsData || []);
+        } else {
+          setCharacterItems([]); // No character, no items
+        }
       } catch (error: any) {
-        showError(`Error fetching character: ${error.message}`);
+        showError(`Error fetching character or items: ${error.message}`);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCharacter();
+    fetchCharacterAndItems();
   }, [session]);
 
   const handleRetireCharacter = async () => {
@@ -89,9 +115,6 @@ const CharacterInventory = () => {
     }
   };
 
-  // The handleAddPennies function is no longer needed if the button is removed.
-  // However, I'll keep it for now as it's part of the currency conversion logic
-  // and might be reused or called from other places in the future.
   const handleAddPennies = async () => {
     if (!character?.id) {
       showError('No active character found.');
@@ -100,7 +123,6 @@ const CharacterInventory = () => {
 
     setIsUpdatingPennies(true);
     try {
-      // Fetch the current character again to ensure we have the latest penny count
       const { data: currentCharacter, error: fetchError } = await supabase
         .from('characters')
         .select('crowns, pennies')
@@ -117,14 +139,14 @@ const CharacterInventory = () => {
         .from('characters')
         .update({ pennies: newPennies })
         .eq('id', character.id)
-        .select('*'); // Select updated character to get new crowns/pennies
+        .select('*');
 
       if (error) {
         throw error;
       }
 
       if (data && data.length > 0) {
-        setCharacter(data[0]); // Update local state with the new character data (including converted crowns/pennies)
+        setCharacter(data[0]);
         showSuccess(`Added 10 pennies! Your new balance is ${data[0].crowns} crowns and ${data[0].pennies} pennies.`);
       }
     } catch (error: any) {
@@ -167,7 +189,7 @@ const CharacterInventory = () => {
             <Link to="/home">Home</Link>
           </Button>
         </div>
-        <Card className="w-full">
+        <Card className="w-full mb-6">
           <CardHeader>
             <CardTitle className="text-2xl text-center">Welcome, {character.name}!</CardTitle>
           </CardHeader>
@@ -195,7 +217,6 @@ const CharacterInventory = () => {
             </p>
           </CardContent>
           <CardFooter className="flex flex-col gap-4 p-6">
-            {/* Removed the "Add 10 Pennies" button */}
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" className="w-full">Retire Character</Button>
@@ -216,6 +237,31 @@ const CharacterInventory = () => {
               </AlertDialogContent>
             </AlertDialog>
           </CardFooter>
+        </Card>
+
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle className="text-2xl text-center">Your Inventory</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {characterItems.length === 0 ? (
+              <p className="text-center text-gray-600 dark:text-gray-400">Your inventory is empty.</p>
+            ) : (
+              <div className="space-y-4">
+                {characterItems.map((item) => (
+                  <div key={item.id} className="border p-3 rounded-md bg-gray-50 dark:bg-gray-700">
+                    <h4 className="font-semibold text-lg text-gray-900 dark:text-white">{item.item_name} (x{item.quantity})</h4>
+                    {item.description && (
+                      <p className="text-sm text-gray-700 dark:text-gray-300">{item.description}</p>
+                    )}
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Acquired on: {new Date(item.acquired_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
         </Card>
       </div>
     </div>
