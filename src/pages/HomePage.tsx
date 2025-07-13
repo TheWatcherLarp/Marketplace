@@ -28,6 +28,7 @@ interface MarketplaceItem {
   seller_id: string;
   listed_at: string;
   category: string; // Added category
+  quantity: number; // Added quantity
 }
 
 const HomePage = () => {
@@ -127,7 +128,7 @@ const HomePage = () => {
             <div className="grid grid-cols-1 gap-4">
               {marketplaceItems.map((item) => (
                 <div key={item.id} className="border p-3 rounded-md bg-gray-50 dark:bg-gray-700">
-                  <h4 className="font-semibold text-lg text-gray-900 dark:text-white">{item.name}</h4>
+                  <h4 className="font-semibold text-lg text-gray-900 dark:text-white">{item.name} (x{item.quantity})</h4>
                   <p className="text-sm text-gray-700 dark:text-gray-300">{item.crowns} Crowns, {item.pennies} Pennies</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Category: {item.category.charAt(0).toUpperCase() + item.category.slice(1)}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{item.description || 'No description.'}</p>

@@ -27,6 +27,7 @@ interface MarketplaceItem {
   seller_id: string;
   listed_at: string;
   category: string; // Added category
+  quantity: number; // Added quantity
   sellerCharacterName?: string;
 }
 
@@ -229,7 +230,7 @@ const Marketplace = () => {
             {items.map((item) => (
               <Card key={item.id} className="flex flex-col">
                 <CardHeader>
-                  <CardTitle>{item.name}</CardTitle>
+                  <CardTitle>{item.name} (x{item.quantity})</CardTitle>
                   <CardDescription>
                     {item.crowns} Crowns, {item.pennies} Pennies
                   </CardDescription>
