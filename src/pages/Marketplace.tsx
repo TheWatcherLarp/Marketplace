@@ -10,7 +10,8 @@ interface MarketplaceItem {
   id: string;
   name: string;
   description: string | null;
-  price: number;
+  crowns: number; // Changed from price
+  pennies: number; // Changed from price
   seller_id: string;
   listed_at: string;
 }
@@ -128,7 +129,9 @@ const Marketplace = () => {
               <Card key={item.id} className="flex flex-col">
                 <CardHeader>
                   <CardTitle>{item.name}</CardTitle>
-                  <CardDescription>${item.price.toFixed(2)}</CardDescription>
+                  <CardDescription>
+                    {item.crowns} Crowns, {item.pennies} Pennies
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="flex-grow">
                   <p className="text-sm text-gray-700 dark:text-gray-300">
