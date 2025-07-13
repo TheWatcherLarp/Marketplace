@@ -120,8 +120,6 @@ const HomePage = () => {
                   : 'N/A'}
               </p>
               <p className="text-md text-gray-600 dark:text-gray-400">Branch: {character.branch || 'N/A'}</p>
-              <p className="text-md text-gray-600 dark:text-gray-400">Crowns: {character.crowns}</p>
-              <p className="text-md text-gray-600 dark:text-gray-400">Pennies: {character.pennies}</p>
             </>
           ) : (
             <Button asChild className="w-full">
