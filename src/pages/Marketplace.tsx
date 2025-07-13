@@ -275,7 +275,7 @@ const Marketplace = () => {
                 <CardFooter className="pt-4">
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button className="w-full" disabled={isBuying || item.seller_id === session?.user?.id}>
+                      <Button className="w-full" disabled={isBuying}> {/* Removed item.seller_id === session?.user?.id */}
                         {item.seller_id === session?.user?.id ? 'Your Item' : 'Buy Item'}
                       </Button>
                     </AlertDialogTrigger>
