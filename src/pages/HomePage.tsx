@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } => 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/components/SessionContextProvider';
@@ -96,7 +96,7 @@ const HomePage = () => {
       <Card className="w-full max-w-md text-center mb-6">
         <CardHeader>
           <CardTitle className="text-3xl">Hello, Adventurer!</CardTitle>
-          <CardDescription>Choose your path.</CardDescription>
+          {/* Removed CardDescription: <CardDescription>Choose your path.</CardDescription> */}
         </CardHeader>
         <CardContent className="space-y-4">
           {character ? (
