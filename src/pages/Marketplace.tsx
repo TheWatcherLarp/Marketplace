@@ -119,7 +119,19 @@ const Marketplace = () => {
     }
   };
 
+  const replenishShortsword = async () => {
+    try {
+      const { error } = await supabase.functions.invoke('replenish-shortsword');
+      if (error) {
+        console.error('Error replenishing shortsword:', error);
+      }
+    } catch (error) {
+      console.error('Failed to invoke replenish-shortsword function:', error);
+    }
+  };
+
   useEffect(() => {
+    replenishShortsword(); // Call replenishment function
     checkCharacterAndFetchItems();
   }, [session, selectedCategory]); // Re-fetch when category changes
 
