@@ -143,9 +143,6 @@ const CharacterInventory = () => {
           </p>
         </CardContent>
         <CardFooter className="flex flex-col gap-4 p-6">
-          <Button asChild className="w-full">
-            <Link to="/marketplace">Go to Marketplace</Link>
-          </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="destructive" className="w-full">Retire Character</Button>
