@@ -83,7 +83,7 @@ const CreateCharacter = () => {
     try {
       const { data, error } = await supabase
         .from('characters')
-        .insert({ user_id: session.user.id, name: characterName.trim(), race: race, guild: guild, branch: branch }) // Include branch
+        .insert({ user_id: session.user.id, name: characterName.trim(), race: race, guild: guild, branch: branch, crowns: 10 }) // Include branch and set initial crowns
         .select();
 
       if (error) {
