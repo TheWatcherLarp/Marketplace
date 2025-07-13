@@ -22,7 +22,6 @@ interface Character {
 interface MarketplaceItem {
   id: string;
   name: string;
-  description: string | null;
   crowns: number;
   pennies: number;
   seller_id: string;
@@ -139,7 +138,6 @@ const HomePage = () => {
                   <h4 className="font-semibold text-lg text-gray-900 dark:text-white">{item.name}</h4>
                   <p className="text-sm text-gray-700 dark:text-gray-300">{item.crowns} Crowns, {item.pennies} Pennies</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Category: {item.category.charAt(0).toUpperCase() + item.category.slice(1)}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{item.description || 'No description.'}</p>
                 </div>
               ))}
             </div>

@@ -21,7 +21,6 @@ import { Link } from 'react-router-dom';
 interface MarketplaceItem {
   id: string;
   name: string;
-  description: string | null;
   crowns: number;
   pennies: number;
   seller_id: string;
@@ -255,9 +254,6 @@ const Marketplace = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex-grow">
-                  <p className="text-sm text-gray-700 dark:text-gray-300">
-                    {item.description || 'No description provided.'}
-                  </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                     Category: {item.category.charAt(0).toUpperCase() + item.category.slice(1)}
                   </p>

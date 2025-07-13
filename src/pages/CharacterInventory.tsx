@@ -43,7 +43,6 @@ interface CharacterItem {
   id: string;
   character_id: string;
   item_name: string;
-  description: string | null;
   quantity: number; // This quantity is for the character's inventory stack
   acquired_at: string;
   crafter_user_id: string | null;
@@ -376,9 +375,6 @@ const CharacterInventory = () => {
                   <div key={item.id} className="border p-3 rounded-md bg-gray-50 dark:bg-gray-700 flex justify-between items-center">
                     <div>
                       <h4 className="font-semibold text-lg text-gray-900 dark:text-white">{item.item_name} (x{item.quantity})</h4>
-                      {item.description && (
-                        <p className="text-sm text-gray-700 dark:text-gray-300">{item.description}</p>
-                      )}
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         Acquired on: {new Date(item.acquired_at).toLocaleDateString()}
                       </p>
