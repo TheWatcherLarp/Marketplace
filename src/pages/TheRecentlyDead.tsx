@@ -97,17 +97,11 @@ const TheRecentlyDead = () => {
               <Card key={character.id} className="flex flex-col">
                 <CardHeader>
                   <CardTitle>{character.name}</CardTitle>
-                  <CardDescription>
-                    {character.race.charAt(0).toUpperCase() + character.race.slice(1)} - {character.guild.charAt(0).toUpperCase() + character.guild.slice(1)}
-                  </CardDescription>
+                  {/* Removed CardDescription for race and guild */}
                 </CardHeader>
                 <CardContent className="flex-grow">
                   <p className="text-sm text-gray-700 dark:text-gray-300">Branch: {character.branch || 'N/A'}</p>
-                  <p className="text-sm text-gray-700 dark:text-gray-300">Crowns: {character.crowns}</p>
-                  <p className="text-sm text-gray-700 dark:text-gray-300">Pennies: {character.pennies}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                    Died: {new Date(character.died_at).toLocaleDateString()}
-                  </p>
+                  {/* Removed Crowns, Pennies, and Died date */}
                 </CardContent>
               </Card>
             ))}
