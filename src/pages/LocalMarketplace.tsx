@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { showError, showSuccess } from '@/utils/toast';
 import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
+import { Badge } from '@/components/ui/badge'; // Import Badge component
 
 interface StaticShopItem {
   id: string; // Unique identifier for static item
@@ -27,6 +28,7 @@ interface StaticShopItem {
   category: string;
   description: string;
   quantity: number; // Quantity to add to inventory per purchase
+  permit_required: string | null; // Added permit_required
 }
 
 interface Character {
@@ -38,14 +40,83 @@ interface Character {
   user_id: string;
 }
 
+interface CharacterPermit {
+  id: string;
+  character_id: string;
+  permit_type: string;
+  created_at: string;
+}
+
 // Define the static list of items available in the local shop
-const staticLocalItems: StaticShopItem[] = []; // Emptied the list as requested
+const staticLocalItems: StaticShopItem[] = [
+  {
+    id: 'static-item-1',
+    name: 'Basic Sword',
+    crowns: 5,
+    pennies: 0,
+    category: 'weapons',
+    description: 'A simple sword for beginners.',
+    quantity: 1,
+    permit_required: 'weapon',
+  },
+  {
+    id: 'static-item-2',
+    name: 'Leather Armor',
+    crowns: 7,
+    pennies: 6,
+    category: 'armour',
+    description: 'Lightweight leather armor.',
+    quantity: 1,
+    permit_required: 'armour',
+  },
+  {
+    id: 'static-item-3',
+    name: 'Healing Potion',
+    crowns: 1,
+    pennies: 0,
+    category: 'consumable',
+    description: 'Restores a small amount of health.',
+    quantity: 3,
+    permit_required: null, // No permit required
+  },
+  {
+    id: 'static-item-4',
+    name: 'Iron Ore',
+    crowns: 0,
+    pennies: 5,
+    category: 'misc',
+    description: 'Raw material for blacksmithing.',
+    quantity: 10,
+    permit_required: 'blacksmith',
+  },
+  {
+    id: 'static-item-5',
+    name: 'Wooden Shield',
+    crowns: 3,
+    pennies: 0,
+    category: 'armour',
+    description: 'A basic wooden shield.',
+    quantity: 1,
+    permit_required: 'armour',
+  },
+  {
+    id: 'static-item-6',
+    name: 'Mana Potion',
+    crowns: 1,
+    pennies: 6,
+    category: 'consumable',
+    description: 'Restores a small amount of mana.',
+    quantity: 2,
+    permit_required: null,
+  },
+];
 
 const LocalMarketplace = () => {
   const { session } = useSession();
   const [items, setItems] = useState<StaticShopItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCharacter, setActiveCharacter] = useState<Character | null>(null);
+  const [activeCharacterPermits, setActiveCharacterPermits] = useState<string[]>([]); // Store permit types
   const [isBuying, setIsBuying] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
 
@@ -70,11 +141,23 @@ const LocalMarketplace = () => {
 
       if (!character) {
         setActiveCharacter(null);
+        setActiveCharacterPermits([]);
         setLoading(false);
         return;
       }
 
       setActiveCharacter(character);
+
+      // Fetch character permits
+      const { data: permitsData, error: permitsError } = await supabase
+        .from('character_permits')
+        .select('permit_type')
+        .eq('character_id', character.id);
+
+      if (permitsError) {
+        throw permitsError;
+      }
+      setActiveCharacterPermits(permitsData?.map(p => p.permit_type) || []);
 
       // Filter static items by selected category
       const filteredItems = selectedCategory === 'all'
@@ -97,6 +180,12 @@ const LocalMarketplace = () => {
   const handleBuyItem = async (item: StaticShopItem) => {
     if (!activeCharacter) {
       showError('You need an active character to buy items.');
+      return;
+    }
+
+    // Check if character has the required permit
+    if (item.permit_required && item.permit_required !== 'none' && !activeCharacterPermits.includes(item.permit_required)) {
+      showError(`You need a ${item.permit_required} permit to purchase this item.`);
       return;
     }
 
@@ -125,13 +214,14 @@ const LocalMarketplace = () => {
         throw updateCharError;
       }
 
-      // Add item to character's inventory
+      // Add item to character's inventory, including permit_required
       const { error: insertItemError } = await supabase
         .from('character_items')
         .insert({
           character_id: activeCharacter.id,
           item_name: item.name,
           quantity: item.quantity,
+          permit_required: item.permit_required, // Pass permit_required
           // crafter_user_id is null for shop items
         });
 
@@ -230,52 +320,62 @@ const LocalMarketplace = () => {
           <p className="text-center text-gray-600 dark:text-gray-400">No items available in this category.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {items.map((item) => (
-              <Card key={item.id} className="flex flex-col">
-                <CardHeader>
-                  <CardTitle>{item.name}</CardTitle>
-                  <CardDescription>
-                    {item.crowns} Crowns, {item.pennies} Pennies
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                    Category: {item.category.charAt(0).toUpperCase() + item.category.slice(1)}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    {item.description}
-                  </p>
-                </CardContent>
-                <CardFooter className="pt-4">
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        className="w-full"
-                        disabled={isBuying}
-                      >
-                        Buy Item
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Confirm Purchase</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Are you sure you want to buy "{item.name}" for {item.crowns} Crowns and {item.pennies} Pennies?
-                          <br />
-                          Your current balance: {activeCharacter?.crowns} Crowns, {activeCharacter?.pennies} Pennies.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel disabled={isBuying}>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleBuyItem(item)} disabled={isBuying}>
-                          {isBuying ? 'Purchasing...' : 'Confirm Purchase'}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </CardFooter>
-              </Card>
-            ))}
+            {items.map((item) => {
+              const requiresPermit = item.permit_required && item.permit_required !== 'none';
+              const hasRequiredPermit = requiresPermit ? activeCharacterPermits.includes(item.permit_required!) : true;
+
+              return (
+                <Card key={item.id} className="flex flex-col">
+                  <CardHeader>
+                    <CardTitle>{item.name}</CardTitle>
+                    <CardDescription>
+                      {item.crowns} Crowns, {item.pennies} Pennies
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex-grow">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                      Category: {item.category.charAt(0).toUpperCase() + item.category.slice(1)}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      {item.description}
+                    </p>
+                    {requiresPermit && (
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                        Requires: <Badge variant="outline" className="capitalize">{item.permit_required} Permit</Badge>
+                      </p>
+                    )}
+                  </CardContent>
+                  <CardFooter className="pt-4">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          className="w-full"
+                          disabled={isBuying || (requiresPermit && !hasRequiredPermit)}
+                        >
+                          {requiresPermit && !hasRequiredPermit ? `Requires ${item.permit_required} Permit` : 'Buy Item'}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Confirm Purchase</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to buy "{item.name}" for {item.crowns} Crowns and {item.pennies} Pennies?
+                            <br />
+                            Your current balance: {activeCharacter?.crowns} Crowns, {activeCharacter?.pennies} Pennies.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel disabled={isBuying}>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleBuyItem(item)} disabled={isBuying}>
+                            {isBuying ? 'Purchasing...' : 'Confirm Purchase'}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </CardFooter>
+                </Card>
+              );
+            })}
           </div>
         )}
       </div>

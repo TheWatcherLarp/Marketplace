@@ -49,6 +49,7 @@ interface CharacterItem {
   quantity: number;
   acquired_at: string;
   crafter_user_id: string | null;
+  permit_required: string | null; // Added permit_required
 }
 
 interface CharacterPermit {
@@ -72,7 +73,7 @@ const CharacterInventory = () => {
   const [sellCategory, setSellCategory] = useState('misc');
   const [sellQuantity, setSellQuantity] = useState(1);
   const [isSelling, setIsSelling] = useState(false);
-  const [hasBlacksmithPermit, setHasBlacksmithPermit] = useState(false); // New state for blacksmith permit
+  const [hasBlacksmithPermit, setHasBlacksmithPermit] = useState(false);
   const navigate = useNavigate();
 
   const fetchCharacterAndItems = async () => {
@@ -98,7 +99,7 @@ const CharacterInventory = () => {
       if (charData) {
         const { data: itemsData, error: itemsError } = await supabase
           .from('character_items')
-          .select('*')
+          .select('*, permit_required') // Select permit_required
           .eq('character_id', charData.id)
           .order('acquired_at', { ascending: false });
 
@@ -257,6 +258,7 @@ const CharacterInventory = () => {
           price_pennies: sellPennies,
           category: sellCategory,
           quantity_to_sell: sellQuantity,
+          // permit_required is handled by the PostgreSQL function, which fetches it from character_items
         }),
       });
 
@@ -443,6 +445,9 @@ const CharacterInventory = () => {
                   <div key={item.id} className="border p-3 rounded-md bg-gray-50 dark:bg-gray-700 flex justify-between items-center">
                     <div>
                       <h4 className="font-semibold text-lg text-gray-900 dark:text-white">{item.item_name} (x{item.quantity})</h4>
+                      {item.permit_required && item.permit_required !== 'none' && (
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Requires: <Badge variant="outline" className="capitalize">{item.permit_required} Permit</Badge></p>
+                      )}
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         Acquired on: {new Date(item.acquired_at).toLocaleDateString()}
                       </p>

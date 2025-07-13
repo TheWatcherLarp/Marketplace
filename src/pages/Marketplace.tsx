@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { showError, showSuccess } from '@/utils/toast';
 import { Link } from 'react-router-dom';
 import Header from '@/components/Header'; // Import the new Header component
+import { Badge } from '@/components/ui/badge'; // Import Badge component
 
 interface MarketplaceItem {
   id: string;
@@ -31,6 +32,7 @@ interface MarketplaceItem {
   sellerCharacterName?: string;
   crafter_user_id: string | null;
   crafterCharacterName?: string;
+  permit_required: string | null; // Added permit_required
 }
 
 interface Character {
@@ -40,12 +42,20 @@ interface Character {
   pennies: number;
 }
 
+interface CharacterPermit {
+  id: string;
+  character_id: string;
+  permit_type: string;
+  created_at: string;
+}
+
 const Marketplace = () => {
   const { session } = useSession();
   const [items, setItems] = useState<MarketplaceItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasCharacter, setHasCharacter] = useState(false);
   const [activeCharacter, setActiveCharacter] = useState<Character | null>(null);
+  const [activeCharacterPermits, setActiveCharacterPermits] = useState<string[]>([]); // Store permit types
   const [isBuying, setIsBuying] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
 
@@ -71,9 +81,20 @@ const Marketplace = () => {
         setHasCharacter(true);
         setActiveCharacter(character);
 
+        // Fetch character permits
+        const { data: permitsData, error: permitsError } = await supabase
+          .from('character_permits')
+          .select('permit_type')
+          .eq('character_id', character.id);
+
+        if (permitsError) {
+          throw permitsError;
+        }
+        setActiveCharacterPermits(permitsData?.map(p => p.permit_type) || []);
+
         let query = supabase
           .from('marketplace_items')
-          .select('*, seller_character_id');
+          .select('*, seller_character_id, permit_required'); // Select permit_required
 
         if (selectedCategory !== 'all') {
           query = query.eq('category', selectedCategory);
@@ -120,6 +141,7 @@ const Marketplace = () => {
       } else {
         setHasCharacter(false);
         setActiveCharacter(null);
+        setActiveCharacterPermits([]);
       }
     } catch (error: any) {
       showError(`Error loading marketplace: ${error.message}`);
@@ -135,6 +157,12 @@ const Marketplace = () => {
   const handleBuyItem = async (item: MarketplaceItem) => {
     if (!activeCharacter) {
       showError('You need an active character to buy items.');
+      return;
+    }
+
+    // Check if character has the required permit
+    if (item.permit_required && item.permit_required !== 'none' && !activeCharacterPermits.includes(item.permit_required)) {
+      showError(`You need a ${item.permit_required} permit to purchase this item.`);
       return;
     }
 
@@ -239,57 +267,71 @@ const Marketplace = () => {
           <p className="text-center text-gray-600 dark:text-gray-400">No items currently listed in this category.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {items.map((item) => (
-              <Card key={item.id} className="flex flex-col">
-                <CardHeader>
-                  <CardTitle>{item.name}</CardTitle>
-                  <CardDescription>
-                    {item.crowns} Crowns, {item.pennies} Pennies
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                    Category: {item.category.charAt(0).toUpperCase() + item.category.slice(1)}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Sold By: {item.sellerCharacterName}
-                  </p>
-                  {item.crafterCharacterName && item.crafterCharacterName !== item.sellerCharacterName && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Crafted By: {item.crafterCharacterName}
+            {items.map((item) => {
+              const requiresPermit = item.permit_required && item.permit_required !== 'none';
+              const hasRequiredPermit = requiresPermit ? activeCharacterPermits.includes(item.permit_required!) : true;
+              const isOwnItem = item.seller_character_id === activeCharacter?.id;
+
+              return (
+                <Card key={item.id} className="flex flex-col">
+                  <CardHeader>
+                    <CardTitle>{item.name}</CardTitle>
+                    <CardDescription>
+                      {item.crowns} Crowns, {item.pennies} Pennies
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex-grow">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                      Category: {item.category.charAt(0).toUpperCase() + item.category.slice(1)}
                     </p>
-                  )}
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Listed on: {new Date(item.listed_at).toLocaleDateString()}
-                  </p>
-                </CardContent>
-                <CardFooter className="pt-4">
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button className="w-full" disabled={isBuying}>
-                        {item.seller_character_id === activeCharacter?.id ? 'Your Item' : 'Buy Item'}
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Confirm Purchase</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Are you sure you want to buy "{item.name}" for {item.crowns} Crowns and {item.pennies} Pennies?
-                          <br />
-                          Your current balance: {activeCharacter?.crowns} Crowns, {activeCharacter?.pennies} Pennies.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel disabled={isBuying}>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleBuyItem(item)} disabled={isBuying}>
-                          {isBuying ? 'Purchasing...' : 'Confirm Purchase'}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </CardFooter>
-              </Card>
-            ))}
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Sold By: {item.sellerCharacterName}
+                    </p>
+                    {item.crafterCharacterName && item.crafterCharacterName !== item.sellerCharacterName && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Crafted By: {item.crafterCharacterName}
+                      </p>
+                    )}
+                    {requiresPermit && (
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                        Requires: <Badge variant="outline" className="capitalize">{item.permit_required} Permit</Badge>
+                      </p>
+                    )}
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Listed on: {new Date(item.listed_at).toLocaleDateString()}
+                    </p>
+                  </CardContent>
+                  <CardFooter className="pt-4">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          className="w-full"
+                          disabled={isBuying || isOwnItem || (requiresPermit && !hasRequiredPermit)}
+                        >
+                          {isOwnItem ? 'Your Item' : (requiresPermit && !hasRequiredPermit ? `Requires ${item.permit_required} Permit` : 'Buy Item')}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Confirm Purchase</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to buy "{item.name}" for {item.crowns} Crowns and {item.pennies} Pennies?
+                            <br />
+                            Your current balance: {activeCharacter?.crowns} Crowns, {activeCharacter?.pennies} Pennies.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel disabled={isBuying}>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleBuyItem(item)} disabled={isBuying}>
+                            {isBuying ? 'Purchasing...' : 'Confirm Purchase'}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </CardFooter>
+                </Card>
+              );
+            })}
           </div>
         )}
       </div>
