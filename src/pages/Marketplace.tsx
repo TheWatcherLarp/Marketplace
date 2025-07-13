@@ -27,7 +27,7 @@ interface MarketplaceItem {
   seller_id: string;
   listed_at: string;
   category: string; // Added category
-  quantity: number; // Added quantity
+  // quantity: number; // Removed quantity as each listing is now unique
   sellerCharacterName?: string;
   crafter_user_id: string | null; // Add crafter_user_id
   crafterCharacterName?: string; // Add crafterCharacterName
@@ -240,9 +240,9 @@ const Marketplace = () => {
                 <SelectItem value="all">All Categories</SelectItem>
                 <SelectItem value="weapons">Weapons</SelectItem>
                 <SelectItem value="armour">Armour</SelectItem>
-                <SelectItem value="misc">Misc</SelectItem>
-              </SelectContent>
-            </Select>
+                  <SelectItem value="misc">Misc</SelectItem>
+                </SelectContent>
+              </Select>
             <Button asChild variant="outline">
               <Link to="/home">Home</Link>
             </Button>
@@ -255,7 +255,7 @@ const Marketplace = () => {
             {items.map((item) => (
               <Card key={item.id} className="flex flex-col">
                 <CardHeader>
-                  <CardTitle>{item.name} (x{item.quantity})</CardTitle>
+                  <CardTitle>{item.name}</CardTitle> {/* Removed (x{item.quantity}) */}
                   <CardDescription>
                     {item.crowns} Crowns, {item.pennies} Pennies
                   </CardDescription>

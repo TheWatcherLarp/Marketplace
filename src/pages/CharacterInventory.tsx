@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/components/SessionContextProvider';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Button } => '@/components/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,9 +44,9 @@ interface CharacterItem {
   character_id: string;
   item_name: string;
   description: string | null;
-  quantity: number;
+  quantity: number; // This quantity is for the character's inventory stack
   acquired_at: string;
-  category: string; // Keeping category as it's part of the item data
+  crafter_user_id: string | null;
 }
 
 const CharacterInventory = () => {
@@ -60,6 +60,7 @@ const CharacterInventory = () => {
   const [sellCrowns, setSellCrowns] = useState(0);
   const [sellPennies, setSellPennies] = useState(0);
   const [sellCategory, setSellCategory] = useState('misc');
+  const [sellQuantity, setSellQuantity] = useState(1); // New state for quantity to sell
   const [isSelling, setIsSelling] = useState(false);
   const navigate = useNavigate();
 
@@ -84,7 +85,6 @@ const CharacterInventory = () => {
       setCharacter(charData || null);
 
       if (charData) {
-        // Fetch all character items without category filter
         const { data: itemsData, error: itemsError } = await supabase
           .from('character_items')
           .select('*')
@@ -107,7 +107,7 @@ const CharacterInventory = () => {
 
   useEffect(() => {
     fetchCharacterAndItems();
-  }, [session]); // No longer dependent on filterCategory
+  }, [session]);
 
   const handleRetireCharacter = async () => {
     if (!character?.id) {
@@ -125,8 +125,8 @@ const CharacterInventory = () => {
       }
 
       showSuccess(`Character '${character.name}' has been retired.`);
-      setCharacter(null); // Clear character state
-      navigate('/create-character'); // Redirect to create new character
+      setCharacter(null);
+      navigate('/create-character');
     } catch (error: any) {
       showError(`Failed to retire character: ${error.message}`);
     }
@@ -148,8 +148,8 @@ const CharacterInventory = () => {
       }
 
       showSuccess(`Character '${character.name}' has passed away.`);
-      setCharacter(null); // Clear character state
-      navigate('/create-character'); // Redirect to create new character
+      setCharacter(null);
+      navigate('/create-character');
     } catch (error: any) {
       showError(`Failed to declare character deceased: ${error.message}`);
     }
@@ -218,6 +218,10 @@ const CharacterInventory = () => {
       showError('Please select a category for the item.');
       return;
     }
+    if (sellQuantity <= 0 || sellQuantity > selectedItemToSell.quantity) {
+      showError(`Quantity to sell must be between 1 and ${selectedItemToSell.quantity}.`);
+      return;
+    }
 
     setIsSelling(true);
     try {
@@ -227,6 +231,7 @@ const CharacterInventory = () => {
           price_crowns: sellCrowns,
           price_pennies: sellPennies,
           category: sellCategory,
+          quantity_to_sell: sellQuantity, // Pass the quantity to sell
         }),
       });
 
@@ -234,12 +239,13 @@ const CharacterInventory = () => {
         throw error;
       }
 
-      showSuccess(data.message || 'Item successfully listed on marketplace!');
+      showSuccess(data.message || 'Item(s) successfully listed on marketplace!');
       setShowSellDialog(false);
       setSelectedItemToSell(null);
       setSellCrowns(0);
       setSellPennies(0);
       setSellCategory('misc');
+      setSellQuantity(1); // Reset sell quantity
       fetchCharacterAndItems(); // Refresh inventory
     } catch (error: any) {
       showError(`Failed to sell item: ${error.message}`);
@@ -280,7 +286,6 @@ const CharacterInventory = () => {
           <Button asChild variant="outline">
             <Link to="/home">Home</Link>
           </Button>
-          {/* Removed category filter select */}
         </div>
         <Card className="w-full mb-6">
           <CardHeader>
@@ -374,7 +379,6 @@ const CharacterInventory = () => {
                       {item.description && (
                         <p className="text-sm text-gray-700 dark:text-gray-300">{item.description}</p>
                       )}
-                      {/* Removed category display */}
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         Acquired on: {new Date(item.acquired_at).toLocaleDateString()}
                       </p>
@@ -384,6 +388,7 @@ const CharacterInventory = () => {
                       size="sm"
                       onClick={() => {
                         setSelectedItemToSell(item);
+                        setSellQuantity(1); // Default to 1 when opening dialog
                         setShowSellDialog(true);
                       }}
                     >
@@ -403,7 +408,7 @@ const CharacterInventory = () => {
           <DialogHeader>
             <DialogTitle>Sell {selectedItemToSell?.item_name}</DialogTitle>
             <DialogDescription>
-              Set the price and category for your item.
+              Set the price, category, and quantity to sell for your item.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -450,13 +455,28 @@ const CharacterInventory = () => {
                 </SelectContent>
               </Select>
             </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="sellQuantity" className="text-right">
+                Quantity to Sell
+              </label>
+              <Input
+                id="sellQuantity"
+                type="number"
+                value={sellQuantity}
+                onChange={(e) => setSellQuantity(Math.max(1, Math.min(parseInt(e.target.value) || 1, selectedItemToSell?.quantity || 1)))}
+                className="col-span-3"
+                min="1"
+                max={selectedItemToSell?.quantity || 1}
+                disabled={isSelling}
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowSellDialog(false)} disabled={isSelling}>
               Cancel
             </Button>
             <Button onClick={handleSellItem} disabled={isSelling}>
-              {isSelling ? 'Listing...' : 'List Item'}
+              {isSelling ? 'Listing...' : 'List Item(s)'}
             </Button>
           </DialogFooter>
         </DialogContent>

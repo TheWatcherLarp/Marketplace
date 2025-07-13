@@ -22,10 +22,10 @@ serve(async (req) => {
       }
     );
 
-    const { character_item_id, price_crowns, price_pennies, category } = await req.json();
+    const { character_item_id, price_crowns, price_pennies, category, quantity_to_sell } = await req.json();
 
-    if (!character_item_id || price_crowns === undefined || price_pennies === undefined || !category) {
-      return new Response(JSON.stringify({ error: 'Missing required parameters (character_item_id, price_crowns, price_pennies, category).' }), {
+    if (!character_item_id || price_crowns === undefined || price_pennies === undefined || !category || quantity_to_sell === undefined) {
+      return new Response(JSON.stringify({ error: 'Missing required parameters (character_item_id, price_crowns, price_pennies, category, quantity_to_sell).' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
       });
@@ -37,6 +37,7 @@ serve(async (req) => {
       p_price_crowns: price_crowns,
       p_price_pennies: price_pennies,
       p_category: category,
+      p_quantity_to_sell: quantity_to_sell, // Pass the new parameter
     });
 
     if (error) {
@@ -47,7 +48,7 @@ serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ message: 'Item successfully listed on marketplace.' }), {
+    return new Response(JSON.stringify({ message: 'Item(s) successfully listed on marketplace.' }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
