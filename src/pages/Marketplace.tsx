@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/components/SessionContextProvider';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } => '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -14,7 +14,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'; // Import Select components
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { showError, showSuccess } from '@/utils/toast';
 import { Link } from 'react-router-dom';
 
@@ -24,12 +24,12 @@ interface MarketplaceItem {
   crowns: number;
   pennies: number;
   seller_id: string;
-  seller_character_id: string | null; // Added seller_character_id
+  seller_character_id: string | null;
   listed_at: string;
-  category: string; // Added category
+  category: string;
   sellerCharacterName?: string;
-  crafter_user_id: string | null; // Add crafter_user_id
-  crafterCharacterName?: string; // Add crafterCharacterName
+  crafter_user_id: string | null;
+  crafterCharacterName?: string;
 }
 
 interface Character {
@@ -46,8 +46,7 @@ const Marketplace = () => {
   const [hasCharacter, setHasCharacter] = useState(false);
   const [activeCharacter, setActiveCharacter] = useState<Character | null>(null);
   const [isBuying, setIsBuying] = useState(false);
-  const [isStocking, setIsStocking] = useState(false); // New state for stocking
-  const [selectedCategory, setSelectedCategory] = useState('all'); // New state for category filter
+  const [selectedCategory, setSelectedCategory] = useState('all');
 
   const checkCharacterAndFetchItems = async () => {
     if (!session?.user?.id) {
@@ -56,15 +55,14 @@ const Marketplace = () => {
     }
 
     try {
-      // Check if the user has an active character and fetch its currency
       const { data: character, error: characterError } = await supabase
         .from('characters')
         .select('id, name, crowns, pennies')
         .eq('user_id', session.user.id)
-        .is('retired_at', null) // Only fetch active characters
+        .is('retired_at', null)
         .single();
 
-      if (characterError && characterError.code !== 'PGRST116') { // PGRST116 means no rows found
+      if (characterError && characterError.code !== 'PGRST116') {
         throw characterError;
       }
 
@@ -72,10 +70,9 @@ const Marketplace = () => {
         setHasCharacter(true);
         setActiveCharacter(character);
 
-        // Fetch marketplace items, optionally filtered by category
         let query = supabase
           .from('marketplace_items')
-          .select('*, seller_character_id'); // Explicitly select seller_character_id
+          .select('*, seller_character_id');
 
         if (selectedCategory !== 'all') {
           query = query.eq('category', selectedCategory);
@@ -87,10 +84,9 @@ const Marketplace = () => {
           throw itemsError;
         }
 
-        // Fetch ALL characters (active, retired, and dead) to map seller_id and crafter_user_id to character names
         const { data: allCharactersData, error: allCharactersError } = await supabase
           .from('characters')
-          .select('user_id, name, id'); // Select character ID as well
+          .select('user_id, name, id');
 
         const { data: retiredCharactersData, error: retiredCharactersError } = await supabase
           .from('retired_characters')
@@ -107,13 +103,11 @@ const Marketplace = () => {
         const userToCharacterNameMap = new Map<string, string>();
         const characterIdToCharacterNameMap = new Map<string, string>();
         
-        // Populate maps
         [...(allCharactersData || []), ...(retiredCharactersData || []), ...(deadCharactersData || [])].forEach(char => {
           userToCharacterNameMap.set(char.user_id, char.name);
           characterIdToCharacterNameMap.set(char.id, char.name);
         });
 
-        // Enrich marketplace items with seller's character name AND crafter's character name
         const enrichedItems = (marketplaceItems || []).map(item => ({
           ...item,
           sellerCharacterName: item.seller_character_id ? characterIdToCharacterNameMap.get(item.seller_character_id) || 'Unknown Adventurer' : userToCharacterNameMap.get(item.seller_id) || 'Unknown Adventurer',
@@ -135,7 +129,7 @@ const Marketplace = () => {
 
   useEffect(() => {
     checkCharacterAndFetchItems();
-  }, [session, selectedCategory]); // Re-fetch when category changes
+  }, [session, selectedCategory]);
 
   const handleBuyItem = async (item: MarketplaceItem) => {
     if (!activeCharacter) {
@@ -157,37 +151,11 @@ const Marketplace = () => {
       }
 
       showSuccess(data.message || `Successfully purchased ${item.name}!`);
-      checkCharacterAndFetchItems(); // Refresh marketplace and character data
+      checkCharacterAndFetchItems();
     } catch (error: any) {
       showError(`Failed to buy item: ${error.message}`);
     } finally {
       setIsBuying(false);
-    }
-  };
-
-  const handleStockBandages = async () => {
-    setIsStocking(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('add-shop-item', {
-        body: JSON.stringify({
-          name: 'Bandages',
-          crowns: 0,
-          pennies: 4,
-          category: 'misc',
-          quantity: 10, // Add 10 bandages at a time
-        }),
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      showSuccess(data.message || 'Bandages successfully stocked!');
-      checkCharacterAndFetchItems(); // Refresh marketplace
-    } catch (error: any) {
-      showError(`Failed to stock bandages: ${error.message}`);
-    } finally {
-      setIsStocking(false);
     }
   };
 
@@ -263,9 +231,6 @@ const Marketplace = () => {
                   <SelectItem value="misc">Misc</SelectItem>
                 </SelectContent>
               </Select>
-            <Button onClick={handleStockBandages} disabled={isStocking}>
-              {isStocking ? 'Stocking...' : 'Stock Bandages'}
-            </Button>
             <Button asChild variant="outline">
               <Link to="/home">Home</Link>
             </Button>
