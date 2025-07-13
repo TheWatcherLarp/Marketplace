@@ -116,12 +116,6 @@ const HomePage = () => {
               <p className="text-md text-gray-600 dark:text-gray-400">Branch: {character.branch || 'N/A'}</p>
               <p className="text-md text-gray-600 dark:text-gray-400">Crowns: {character.crowns}</p>
               <p className="text-md text-gray-600 dark:text-gray-400">Pennies: {character.pennies}</p>
-              <Button asChild className="w-full">
-                <Link to="/character-inventory">View Character Inventory</Link>
-              </Button>
-              <Button asChild className="w-full" variant="outline">
-                <Link to="/branch-members">View Branch Members</Link>
-              </Button>
             </>
           ) : (
             <Button asChild className="w-full">
@@ -149,9 +143,6 @@ const HomePage = () => {
           ) : (
             <p className="text-gray-600 dark:text-gray-400">No items currently listed.</p>
           )}
-          <Button asChild className="w-full" variant="outline">
-            <Link to="/marketplace">Explore Full Marketplace</Link>
-          </Button>
         </CardContent>
       </Card>
     </div>
