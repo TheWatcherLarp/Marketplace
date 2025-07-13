@@ -183,6 +183,10 @@ const CharacterInventory = () => {
       showError('Price cannot be zero.');
       return;
     }
+    if (sellPennies >= 12) {
+      showError('Pennies must be less than 12. Please convert 12 pennies to 1 Crown.');
+      return;
+    }
 
     setIsSelling(true);
     try {
