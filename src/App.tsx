@@ -10,6 +10,7 @@ import CreateCharacter from "./pages/CreateCharacter";
 import CharacterInventory from "./pages/CharacterInventory";
 import Marketplace from "./pages/Marketplace";
 import HomePage from "./pages/HomePage";
+import BranchMembers from "./pages/BranchMembers"; // Import the new component
 import { SessionContextProvider } from "./components/SessionContextProvider";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/character-inventory" element={<CharacterInventory />} />
             <Route path="/marketplace" element={<Marketplace />} />
             <Route path="/home" element={<HomePage />} />
+            <Route path="/branch-members" element={<BranchMembers />} /> {/* New route */}
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -117,6 +117,9 @@ const HomePage = () => {
               <Button asChild className="w-full">
                 <Link to="/character-inventory">View Character Inventory</Link>
               </Button>
+              <Button asChild className="w-full" variant="outline">
+                <Link to="/branch-members">View Branch Members</Link>
+              </Button>
             </>
           ) : (
             <Button asChild className="w-full">
