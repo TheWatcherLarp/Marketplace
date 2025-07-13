@@ -29,6 +29,8 @@ interface MarketplaceItem {
   category: string; // Added category
   quantity: number; // Added quantity
   sellerCharacterName?: string;
+  crafter_user_id: string | null; // Add crafter_user_id
+  crafterCharacterName?: string; // Add crafterCharacterName
 }
 
 interface Character {
@@ -85,8 +87,7 @@ const Marketplace = () => {
           throw itemsError;
         }
 
-        // Fetch ALL characters (active, retired, and dead) to map seller_id to character name
-        // This ensures 'Crafted By' remains consistent even if a character is retired/killed
+        // Fetch ALL characters (active, retired, and dead) to map seller_id and crafter_user_id to character names
         const { data: allCharactersData, error: allCharactersError } = await supabase
           .from('characters')
           .select('user_id, name');
@@ -118,10 +119,11 @@ const Marketplace = () => {
           characterMap.set(char.user_id, char.name);
         });
 
-        // Enrich marketplace items with seller's character name
+        // Enrich marketplace items with seller's character name AND crafter's character name
         const enrichedItems = (marketplaceItems || []).map(item => ({
           ...item,
           sellerCharacterName: characterMap.get(item.seller_id) || 'Unknown Adventurer',
+          crafterCharacterName: item.crafter_user_id ? characterMap.get(item.crafter_user_id) || 'Unknown Crafter' : 'Unknown Crafter',
         }));
         
         setItems(enrichedItems);
@@ -266,8 +268,13 @@ const Marketplace = () => {
                     Category: {item.category.charAt(0).toUpperCase() + item.category.slice(1)}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Crafted By: {item.sellerCharacterName}
+                    Sold By: {item.sellerCharacterName}
                   </p>
+                  {item.crafterCharacterName && item.crafterCharacterName !== item.sellerCharacterName && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Crafted By: {item.crafterCharacterName}
+                    </p>
+                  )}
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     Listed on: {new Date(item.listed_at).toLocaleDateString()}
                   </p>
@@ -275,7 +282,7 @@ const Marketplace = () => {
                 <CardFooter className="pt-4">
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button className="w-full" disabled={isBuying}> {/* Removed item.seller_id === session?.user?.id */}
+                      <Button className="w-full" disabled={isBuying}>
                         {item.seller_id === session?.user?.id ? 'Your Item' : 'Buy Item'}
                       </Button>
                     </AlertDialogTrigger>
