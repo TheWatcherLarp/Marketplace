@@ -112,6 +112,9 @@ const HomePage = () => {
               <Link to="/create-character">Create New Character</Link>
             </Button>
           )}
+          <Button asChild className="w-full" variant="secondary">
+            <Link to="/generate-items">Generate Marketplace Items</Link>
+          </Button>
         </CardContent>
       </Card>
 
