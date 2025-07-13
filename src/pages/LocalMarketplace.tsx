@@ -39,62 +39,7 @@ interface Character {
 }
 
 // Define the static list of items available in the local shop
-const staticLocalItems: StaticShopItem[] = [
-  {
-    id: 'shop-item-1',
-    name: 'Basic Healing Potion',
-    crowns: 1,
-    pennies: 5,
-    category: 'consumable',
-    description: 'Restores a small amount of health.',
-    quantity: 1,
-  },
-  {
-    id: 'shop-item-2',
-    name: 'Iron Sword',
-    crowns: 5,
-    pennies: 0,
-    category: 'weapons',
-    description: 'A sturdy, basic iron sword.',
-    quantity: 1,
-  },
-  {
-    id: 'shop-item-3',
-    name: 'Leather Armor',
-    crowns: 8,
-    pennies: 0,
-    category: 'armour',
-    description: 'Lightweight leather armor for protection.',
-    quantity: 1,
-  },
-  {
-    id: 'shop-item-4',
-    name: 'Torch',
-    crowns: 0,
-    pennies: 8,
-    category: 'misc',
-    description: 'Provides light in dark places.',
-    quantity: 1,
-  },
-  {
-    id: 'shop-item-5',
-    name: 'Rope (50ft)',
-    crowns: 0,
-    pennies: 10,
-    category: 'misc',
-    description: 'Essential for climbing and tying things.',
-    quantity: 1,
-  },
-  {
-    id: 'shop-item-6',
-    name: 'Small Backpack',
-    crowns: 2,
-    pennies: 0,
-    category: 'misc',
-    description: 'Increases carrying capacity slightly.',
-    quantity: 1,
-  },
-];
+const staticLocalItems: StaticShopItem[] = []; // Emptied the list as requested
 
 const LocalMarketplace = () => {
   const { session } = useSession();
