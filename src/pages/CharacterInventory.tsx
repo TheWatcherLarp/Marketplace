@@ -25,7 +25,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { showError, showSuccess } from '@/utils/toast';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import Header from '@/components/Header'; // Import the new Header component
 
 interface Character {
   id: string;
@@ -230,7 +231,7 @@ const CharacterInventory = () => {
           price_crowns: sellCrowns,
           price_pennies: sellPennies,
           category: sellCategory,
-          quantity_to_sell: sellQuantity, // Pass the quantity to sell
+          quantity_to_sell: sellQuantity, // Pass the new parameter
         }),
       });
 
@@ -279,13 +280,9 @@ const CharacterInventory = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-4">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 pt-20 p-4"> {/* Added pt-20 for header spacing */}
+      <Header /> {/* Add the Header component */}
       <div className="max-w-md mx-auto">
-        <div className="flex justify-between items-center mb-4">
-          <Button asChild variant="outline">
-            <Link to="/home">Home</Link>
-          </Button>
-        </div>
         <Card className="w-full mb-6">
           <CardHeader>
             <CardTitle className="text-2xl text-center">Welcome, {character.name}!</CardTitle>

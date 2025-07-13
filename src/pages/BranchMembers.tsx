@@ -5,6 +5,7 @@ import { useSession } from '@/components/SessionContextProvider';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { showError } from '@/utils/toast';
+import Header from '@/components/Header'; // Import the new Header component
 
 interface Character {
   id: string;
@@ -131,15 +132,13 @@ const BranchMembers = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-4">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 pt-20 p-4"> {/* Added pt-20 for header spacing */}
+      <Header /> {/* Add the Header component */}
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             {currentBranch} Branch Members
           </h1>
-          <Button asChild variant="outline">
-            <Link to="/home">Home</Link>
-          </Button>
         </div>
 
         <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">

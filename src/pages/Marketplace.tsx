@@ -17,6 +17,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { showError, showSuccess } from '@/utils/toast';
 import { Link } from 'react-router-dom';
+import Header from '@/components/Header'; // Import the new Header component
 
 interface MarketplaceItem {
   id: string;
@@ -98,7 +99,7 @@ const Marketplace = () => {
 
         if (allCharactersError) throw allCharactersError;
         if (retiredCharactersError) throw retiredCharactersError;
-        if (deadCharactersError) throw deadCharactersError;
+        if (deadCharactersError) throw deadCharactersData;
 
         const userToCharacterNameMap = new Map<string, string>();
         const characterIdToCharacterNameMap = new Map<string, string>();
@@ -208,7 +209,8 @@ const Marketplace = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-4">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 pt-20 p-4"> {/* Added pt-20 for header spacing */}
+      <Header /> {/* Add the Header component */}
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
@@ -231,9 +233,6 @@ const Marketplace = () => {
                   <SelectItem value="misc">Misc</SelectItem>
                 </SelectContent>
               </Select>
-            <Button asChild variant="outline">
-              <Link to="/home">Home</Link>
-            </Button>
           </div>
         </div>
         {items.length === 0 ? (
