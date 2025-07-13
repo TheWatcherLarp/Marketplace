@@ -170,8 +170,27 @@ const CreateCharacter = () => {
                   <SelectValue placeholder="Select a branch" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Portsmouth">Portsmouth</SelectItem>
+                  <SelectItem value="Bath">Bath</SelectItem>
+                  <SelectItem value="Black Country">Black Country</SelectItem>
+                  <SelectItem value="Bristol">Bristol</SelectItem>
+                  <SelectItem value="Cardiff">Cardiff</SelectItem>
+                  <SelectItem value="Derby">Derby</SelectItem>
+                  <SelectItem value="Edinburgh">Edinburgh</SelectItem>
+                  <SelectItem value="Glasgow">Glasgow</SelectItem>
                   <SelectItem value="Guildford">Guildford</SelectItem>
+                  <SelectItem value="Hull">Hull</SelectItem>
+                  <SelectItem value="Leeds">Leeds</SelectItem>
+                  <SelectItem value="Maidenhead">Maidenhead</SelectItem>
+                  <SelectItem value="Newcastle">Newcastle</SelectItem>
+                  <SelectItem value="Norwich">Norwich</SelectItem>
+                  <SelectItem value="Nottingham">Nottingham</SelectItem>
+                  <SelectItem value="Peterborough">Peterborough</SelectItem>
+                  <SelectItem value="Plymouth">Plymouth</SelectItem>
+                  <SelectItem value="Portsmouth">Portsmouth</SelectItem>
+                  <SelectItem value="Sheffield">Sheffield</SelectItem>
+                  <SelectItem value="St Helens">St Helens</SelectItem>
+                  <SelectItem value="Stockport">Stockport</SelectItem>
+                  <SelectItem value="Tees Valley">Tees Valley</SelectItem>
                 </SelectContent>
               </Select>
             </div>
