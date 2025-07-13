@@ -7,6 +7,7 @@ import { showError } from '@/utils/toast';
 interface Character {
   id: string;
   name: string;
+  race: string; // Add race to the interface
   created_at: string;
 }
 
@@ -78,6 +79,9 @@ const CharacterInventory = () => {
         <CardContent className="text-center">
           <p className="text-lg text-gray-700 dark:text-gray-300">
             This is your character inventory page.
+          </p>
+          <p className="text-md text-gray-700 dark:text-gray-300 mt-2">
+            Race: {character.race.charAt(0).toUpperCase() + character.race.slice(1)}
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
             Character ID: {character.id}
