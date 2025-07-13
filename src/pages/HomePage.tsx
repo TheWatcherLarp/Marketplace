@@ -55,7 +55,7 @@ const HomePage = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
       <Card className="w-full max-w-md text-center">
         <CardHeader>
-          <CardTitle className="text-3xl">Welcome, Adventurer!</CardTitle>
+          <CardTitle className="text-3xl">Hello, Adventurer!</CardTitle>
           <CardDescription>Choose your path.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
