@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } => 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/components/SessionContextProvider';
@@ -112,9 +112,6 @@ const HomePage = () => {
               <Link to="/create-character">Create New Character</Link>
             </Button>
           )}
-          <Button asChild className="w-full" variant="secondary">
-            <Link to="/generate-items">Generate Marketplace Items</Link>
-          </Button>
         </CardContent>
       </Card>
 
