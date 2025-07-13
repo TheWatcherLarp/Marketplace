@@ -40,7 +40,9 @@ export const SessionContextProvider: React.FC<{ children: React.ReactNode }> = (
       const currentPath = location.pathname;
       const isLoginPage = currentPath === '/login';
       const isCreateCharacterPage = currentPath === '/create-character';
-      const isHomePage = currentPath === '/home';
+      
+      // Define paths that an authenticated user with a character can visit
+      const allowedAuthPaths = ['/', '/home', '/character-inventory', '/marketplace'];
 
       if (session) {
         // User is logged in
@@ -59,9 +61,9 @@ export const SessionContextProvider: React.FC<{ children: React.ReactNode }> = (
             }
 
             if (character) {
-              // Active character exists, redirect to home page if not already there
-              if (!isHomePage) {
-                navigate('/home');
+              // Active character exists, allow navigation to specific pages
+              if (!allowedAuthPaths.includes(currentPath)) {
+                navigate('/home'); // Redirect to home if on an unauthorized page
               }
             } else {
               // No active character, redirect to create character page if not already there
