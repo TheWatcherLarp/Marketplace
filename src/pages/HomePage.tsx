@@ -14,6 +14,8 @@ interface Character {
   guild: string;
   created_at: string;
   retired_at: string | null;
+  crowns: number; // Added crowns
+  pennies: number; // Added pennies
 }
 
 interface MarketplaceItem {
@@ -98,6 +100,8 @@ const HomePage = () => {
               <p className="text-lg text-gray-700 dark:text-gray-300">Name: {character.name}</p>
               <p className="text-md text-gray-600 dark:text-gray-400">Race: {character.race.charAt(0).toUpperCase() + character.race.slice(1)}</p>
               <p className="text-md text-gray-600 dark:text-gray-400">Guild: {character.guild.charAt(0).toUpperCase() + character.guild.slice(1)}</p>
+              <p className="text-md text-gray-600 dark:text-gray-400">Crowns: {character.crowns}</p>
+              <p className="text-md text-gray-600 dark:text-gray-400">Pennies: {character.pennies}</p>
               <Button asChild className="w-full">
                 <Link to="/character-inventory">View Character Inventory</Link>
               </Button>

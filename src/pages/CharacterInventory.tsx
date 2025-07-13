@@ -15,7 +15,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { showError, showSuccess } from '@/utils/toast';
-import { useNavigate, Link } from 'react-router-dom'; // Import Link
+import { useNavigate, Link } from 'react-router-dom';
 
 interface Character {
   id: string;
@@ -23,7 +23,9 @@ interface Character {
   race: string;
   guild: string;
   created_at: string;
-  retired_at: string | null; // Add retired_at to the interface
+  retired_at: string | null;
+  crowns: number; // Added crowns
+  pennies: number; // Added pennies
 }
 
 const CharacterInventory = () => {
@@ -44,7 +46,7 @@ const CharacterInventory = () => {
           .from('characters')
           .select('*')
           .eq('user_id', session.user.id)
-          .is('retired_at', null) // Only fetch active characters
+          .is('retired_at', null)
           .single();
 
         if (error && error.code !== 'PGRST116') {
@@ -71,7 +73,7 @@ const CharacterInventory = () => {
     try {
       const { error } = await supabase
         .from('characters')
-        .update({ retired_at: new Date().toISOString() }) // Set retired_at timestamp
+        .update({ retired_at: new Date().toISOString() })
         .eq('id', character.id);
 
       if (error) {
@@ -79,8 +81,8 @@ const CharacterInventory = () => {
       }
 
       showSuccess(`Character '${character.name}' has been retired.`);
-      setCharacter(null); // Clear character state
-      navigate('/create-character'); // Redirect to create character page
+      setCharacter(null);
+      navigate('/create-character');
     } catch (error: any) {
       showError(`Failed to retire character: ${error.message}`);
     }
@@ -127,15 +129,20 @@ const CharacterInventory = () => {
           <p className="text-md text-gray-700 dark:text-gray-300 mt-2">
             Guild: {character.guild.charAt(0).toUpperCase() + character.guild.slice(1)}
           </p>
+          <p className="text-md text-gray-700 dark:text-gray-300 mt-2">
+            Crowns: {character.crowns}
+          </p>
+          <p className="text-md text-gray-700 dark:text-gray-300 mt-2">
+            Pennies: {character.pennies}
+          </p>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
             Character ID: {character.id}
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Created On: {new Date(character.created_at).toLocaleDateString()}
           </p>
-          {/* Add more inventory details here later */}
         </CardContent>
-        <CardFooter className="flex flex-col gap-4 p-6"> {/* Use flex-col and gap for spacing */}
+        <CardFooter className="flex flex-col gap-4 p-6">
           <Button asChild className="w-full">
             <Link to="/marketplace">Go to Marketplace</Link>
           </Button>
