@@ -21,6 +21,7 @@ interface Character {
   id: string;
   name: string;
   race: string;
+  guild: string; // Add guild to the interface
   created_at: string;
 }
 
@@ -120,6 +121,9 @@ const CharacterInventory = () => {
           </p>
           <p className="text-md text-gray-700 dark:text-gray-300 mt-2">
             Race: {character.race.charAt(0).toUpperCase() + character.race.slice(1)}
+          </p>
+          <p className="text-md text-gray-700 dark:text-gray-300 mt-2">
+            Guild: {character.guild.charAt(0).toUpperCase() + character.guild.slice(1)}
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
             Character ID: {character.id}
