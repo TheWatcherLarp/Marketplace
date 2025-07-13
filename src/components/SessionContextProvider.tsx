@@ -2,6 +2,7 @@ import React, { useState, useEffect, createContext, useContext } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { showError } from '@/utils/toast';
 
 interface SessionContextType {
   session: Session | null;
@@ -33,23 +34,61 @@ export const SessionContextProvider: React.FC<{ children: React.ReactNode }> = (
   }, []);
 
   useEffect(() => {
-    if (!loading) {
+    const handleAuthRedirect = async () => {
+      if (loading) return;
+
+      const currentPath = location.pathname;
+      const isLoginPage = currentPath === '/login';
+      const isCreateCharacterPage = currentPath === '/create-character';
+      const isCharacterInventoryPage = currentPath === '/character-inventory';
+
       if (session) {
-        // User is logged in, redirect to home if on login page
-        if (location.pathname === '/login') {
+        // User is logged in
+        if (session.user?.id) {
+          try {
+            const { data: character, error } = await supabase
+              .from('characters')
+              .select('id')
+              .eq('user_id', session.user.id)
+              .single();
+
+            if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
+              throw error;
+            }
+
+            if (character) {
+              // Character exists, redirect to inventory if not already there
+              if (!isCharacterInventoryPage) {
+                navigate('/character-inventory');
+              }
+            } else {
+              // No character, redirect to create character page if not already there
+              if (!isCreateCharacterPage) {
+                navigate('/create-character');
+              }
+            }
+          } catch (error: any) {
+            showError(`Failed to check character: ${error.message}`);
+            // Fallback to home or login if character check fails critically
+            navigate('/login');
+          }
+        } else if (isLoginPage) {
+          // Logged in but no user ID (shouldn't happen often), redirect to home
           navigate('/');
         }
       } else {
         // User is not logged in, redirect to login page if not already there
-        if (location.pathname !== '/login') {
+        if (!isLoginPage) {
           navigate('/login');
         }
       }
-    }
+    };
+
+    handleAuthRedirect();
   }, [session, loading, navigate, location.pathname]);
 
   if (loading) {
-    return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
+    return <div className="flex justify-center items-center min-h-screen text-lg text-gray-700 dark:text-gray-300">Loading application...</div>;
   }
 
   return (
