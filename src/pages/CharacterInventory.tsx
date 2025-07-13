@@ -114,56 +114,63 @@ const CharacterInventory = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl text-center">Welcome, {character.name}!</CardTitle>
-        </CardHeader>
-        <CardContent className="text-center">
-          <p className="text-lg text-gray-700 dark:text-gray-300">
-            This is your character inventory page.
-          </p>
-          <p className="text-md text-gray-700 dark:text-gray-300 mt-2">
-            Race: {character.race.charAt(0).toUpperCase() + character.race.slice(1)}
-          </p>
-          <p className="text-md text-gray-700 dark:text-gray-300 mt-2">
-            Guild: {character.guild.charAt(0).toUpperCase() + character.guild.slice(1)}
-          </p>
-          <p className="text-md text-gray-700 dark:text-gray-300 mt-2">
-            Crowns: {character.crowns}
-          </p>
-          <p className="text-md text-gray-700 dark:text-gray-300 mt-2">
-            Pennies: {character.pennies}
-          </p>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-            Character ID: {character.id}
-          </p>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Created On: {new Date(character.created_at).toLocaleDateString()}
-          </p>
-        </CardContent>
-        <CardFooter className="flex flex-col gap-4 p-6">
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive" className="w-full">Retire Character</Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This action will mark your character as retired. You will no longer be able to use this character.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleRetireCharacter}>
-                  Continue
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </CardFooter>
-      </Card>
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-4">
+      <div className="max-w-md mx-auto">
+        <div className="flex justify-end mb-4">
+          <Button asChild variant="outline">
+            <Link to="/home">Home</Link>
+          </Button>
+        </div>
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle className="text-2xl text-center">Welcome, {character.name}!</CardTitle>
+          </CardHeader>
+          <CardContent className="text-center">
+            <p className="text-lg text-gray-700 dark:text-gray-300">
+              This is your character inventory page.
+            </p>
+            <p className="text-md text-gray-700 dark:text-gray-300 mt-2">
+              Race: {character.race.charAt(0).toUpperCase() + character.race.slice(1)}
+            </p>
+            <p className="text-md text-gray-700 dark:text-gray-300 mt-2">
+              Guild: {character.guild.charAt(0).toUpperCase() + character.guild.slice(1)}
+            </p>
+            <p className="text-md text-gray-700 dark:text-gray-300 mt-2">
+              Crowns: {character.crowns}
+            </p>
+            <p className="text-md text-gray-700 dark:text-gray-300 mt-2">
+              Pennies: {character.pennies}
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+              Character ID: {character.id}
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Created On: {new Date(character.created_at).toLocaleDateString()}
+            </p>
+          </CardContent>
+          <CardFooter className="flex flex-col gap-4 p-6">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" className="w-full">Retire Character</Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action will mark your character as retired. You will no longer be able to use this character.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleRetireCharacter}>
+                    Continue
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </CardFooter>
+        </Card>
+      </div>
     </div>
   );
 };
