@@ -112,20 +112,42 @@ const CharacterInventory = () => {
     }
 
     try {
-      const { error } = await supabase
-        .from('characters')
-        .update({ retired_at: new Date().toISOString() })
-        .eq('id', character.id);
+      const { error } = await supabase.rpc('retire_character_and_move', {
+        p_character_id: character.id,
+      });
 
       if (error) {
         throw error;
       }
 
       showSuccess(`Character '${character.name}' has been retired.`);
-      setCharacter(null);
-      navigate('/create-character');
+      setCharacter(null); // Clear character state
+      navigate('/create-character'); // Redirect to create new character
     } catch (error: any) {
       showError(`Failed to retire character: ${error.message}`);
+    }
+  };
+
+  const handleCharacterDeath = async () => {
+    if (!character?.id) {
+      showError('No character to declare deceased.');
+      return;
+    }
+
+    try {
+      const { error } = await supabase.rpc('kill_character_and_move', {
+        p_character_id: character.id,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      showSuccess(`Character '${character.name}' has passed away.`);
+      setCharacter(null); // Clear character state
+      navigate('/create-character'); // Redirect to create new character
+    } catch (error: any) {
+      showError(`Failed to declare character deceased: ${error.message}`);
     }
   };
 
@@ -288,7 +310,7 @@ const CharacterInventory = () => {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This action will mark your character as retired. You will no longer be able to use this character.
+                    This action will move your character to the retired characters archive. You will no longer be able to use this character.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -308,12 +330,12 @@ const CharacterInventory = () => {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Confirm Character Death</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Are you sure you want to declare your character deceased? This action will mark your character as retired, and they will no longer be playable.
+                    Are you sure you want to declare your character deceased? This action will move your character to the dead characters archive, and they will no longer be playable.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleRetireCharacter}>
+                  <AlertDialogAction onClick={handleCharacterDeath}>
                     Confirm Death
                   </AlertDialogAction>
                 </AlertDialogFooter>
