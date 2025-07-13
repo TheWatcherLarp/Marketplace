@@ -46,7 +46,7 @@ interface CharacterItem {
   description: string | null;
   quantity: number;
   acquired_at: string;
-  category: string; // Added category
+  category: string; // Keeping category as it's part of the item data
 }
 
 const CharacterInventory = () => {
@@ -61,7 +61,6 @@ const CharacterInventory = () => {
   const [sellPennies, setSellPennies] = useState(0);
   const [sellCategory, setSellCategory] = useState('misc');
   const [isSelling, setIsSelling] = useState(false);
-  const [filterCategory, setFilterCategory] = useState('all'); // New state for category filter in inventory
   const navigate = useNavigate();
 
   const fetchCharacterAndItems = async () => {
@@ -85,16 +84,12 @@ const CharacterInventory = () => {
       setCharacter(charData || null);
 
       if (charData) {
-        let query = supabase
+        // Fetch all character items without category filter
+        const { data: itemsData, error: itemsError } = await supabase
           .from('character_items')
           .select('*')
-          .eq('character_id', charData.id);
-        
-        if (filterCategory !== 'all') {
-          query = query.eq('category', filterCategory);
-        }
-
-        const { data: itemsData, error: itemsError } = await query.order('acquired_at', { ascending: false });
+          .eq('character_id', charData.id)
+          .order('acquired_at', { ascending: false });
 
         if (itemsError) {
           throw itemsError;
@@ -112,7 +107,7 @@ const CharacterInventory = () => {
 
   useEffect(() => {
     fetchCharacterAndItems();
-  }, [session, filterCategory]); // Re-fetch when filterCategory changes
+  }, [session]); // No longer dependent on filterCategory
 
   const handleRetireCharacter = async () => {
     if (!character?.id) {
@@ -285,17 +280,7 @@ const CharacterInventory = () => {
           <Button asChild variant="outline">
             <Link to="/home">Home</Link>
           </Button>
-          <Select onValueChange={setFilterCategory} value={filterCategory}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by Category" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              <SelectItem value="weapons">Weapons</SelectItem>
-              <SelectItem value="armour">Armour</SelectItem>
-              <SelectItem value="misc">Misc</SelectItem>
-            </SelectContent>
-          </Select>
+          {/* Removed category filter select */}
         </div>
         <Card className="w-full mb-6">
           <CardHeader>
@@ -306,20 +291,14 @@ const CharacterInventory = () => {
               This is your character inventory page.
             </p>
             <p className="text-md text-gray-700 dark:text-gray-300 mt-2">
-              Race: {(() => {
-                console.log('Character race:', character?.race, 'Type:', typeof character?.race);
-                return typeof character?.race === 'string' && character?.race
-                  ? character.race.charAt(0).toUpperCase() + character.race.slice(1)
-                  : 'N/A';
-              })()}
+              Race: {typeof character.race === 'string' && character.race
+                ? character.race.charAt(0).toUpperCase() + character.race.slice(1)
+                : 'N/A'}
             </p>
             <p className="text-md text-gray-700 dark:text-gray-300 mt-2">
-              Guild: {(() => {
-                console.log('Character guild:', character?.guild, 'Type:', typeof character?.guild);
-                return typeof character?.guild === 'string' && character?.guild
-                  ? character.guild.charAt(0).toUpperCase() + character.guild.slice(1)
-                  : 'N/A';
-              })()}
+              Guild: {typeof character.guild === 'string' && character.guild
+                ? character.guild.charAt(0).toUpperCase() + character.guild.slice(1)
+                : 'N/A'}
             </p>
             <p className="text-md text-gray-700 dark:text-gray-300 mt-2">
               Branch: {character.branch || 'N/A'}
@@ -395,9 +374,7 @@ const CharacterInventory = () => {
                       {item.description && (
                         <p className="text-sm text-gray-700 dark:text-gray-300">{item.description}</p>
                       )}
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Category: {item.category.charAt(0).toUpperCase() + item.category.slice(1)}
-                      </p>
+                      {/* Removed category display */}
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         Acquired on: {new Date(item.acquired_at).toLocaleDateString()}
                       </p>
