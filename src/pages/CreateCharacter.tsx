@@ -5,7 +5,7 @@ import { useSession } from '@/components/SessionContextProvider';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select';
 import { showError, showSuccess } from '@/utils/toast';
 
 const CreateCharacter = () => {
@@ -83,6 +83,8 @@ const CreateCharacter = () => {
           permitsToInsert.push({ character_id: characterId, permit_type: 'armour' });
         } else if (guild === 'blacksmith') {
           permitsToInsert.push({ character_id: characterId, permit_type: 'blacksmith' });
+        } else if (guild === 'alchemist') {
+          permitsToInsert.push({ character_id: characterId, permit_type: 'alchemist' });
         }
 
         if (permitsToInsert.length > 0) {
@@ -155,9 +157,16 @@ const CreateCharacter = () => {
                   <SelectValue placeholder="Select a guild" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="mercenary">Mercenary</SelectItem>
-                  <SelectItem value="scout">Scout</SelectItem>
-                  <SelectItem value="blacksmith">Blacksmith</SelectItem>
+                  <SelectGroup>
+                    <SelectLabel>Martial Guilds</SelectLabel>
+                    <SelectItem value="mercenary">Mercenary</SelectItem>
+                    <SelectItem value="scout">Scout</SelectItem>
+                  </SelectGroup>
+                  <SelectGroup>
+                    <SelectLabel>Crafting Guilds</SelectLabel>
+                    <SelectItem value="alchemist">Alchemist</SelectItem>
+                    <SelectItem value="blacksmith">Blacksmith</SelectItem>
+                  </SelectGroup>
                 </SelectContent>
               </Select>
             </div>
