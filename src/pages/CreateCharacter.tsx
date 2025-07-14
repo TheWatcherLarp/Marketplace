@@ -87,8 +87,10 @@ const CreateCharacter = () => {
           permitsToInsert.push({ character_id: characterId, permit_type: 'alchemist' });
         } else if (guild === 'mage') {
           // No specific permit for mage yet, but can be added here if needed
-        } else if (['sidhe', 'crowa', 'kharack', 'longstor', 'vleybor', 'rholbor', 'tralda', 'crowan rose'].includes(guild)) { // Added 'crowan rose'
+        } else if (['sidhe', 'crowa', 'kharack', 'longstor', 'vleybor', 'rholbor', 'tralda', 'crowan rose'].includes(guild)) {
           // No specific permits for church/religious guilds by default, add if needed
+        } else if (guild === 'guard' || guild === 'forester') { // Added for Lawman guilds
+          // No specific permits for Lawman guilds by default, add if needed
         }
 
         if (permitsToInsert.length > 0) {
@@ -195,6 +197,11 @@ const CreateCharacter = () => {
                   <SelectGroup>
                     <SelectLabel>Religious Order</SelectLabel>
                     <SelectItem value="crowan rose">Crowan Rose</SelectItem>
+                  </SelectGroup>
+                  <SelectGroup>
+                    <SelectLabel>Lawman</SelectLabel>
+                    <SelectItem value="guard">Guard</SelectItem>
+                    <SelectItem value="forester">Forester</SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
