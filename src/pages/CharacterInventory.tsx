@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/components/SessionContextProvider';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Button }1 from '@/components/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,7 +35,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"; // Import Table components
+} from "@/components/ui/table";
 
 interface Character {
   id: string;
@@ -356,8 +356,8 @@ const CharacterInventory = () => {
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 pt-20 p-4">
       <Header />
-      <div className="max-w-md mx-auto">
-        <Card className="w-full mb-6">
+      <div className="max-w-md mx-auto mb-6"> {/* Character info card wrapper */}
+        <Card className="w-full">
           <CardHeader>
             <CardTitle className="text-2xl text-center">Welcome, {character.name}!</CardTitle>
           </CardHeader>
@@ -456,7 +456,9 @@ const CharacterInventory = () => {
             </AlertDialog>
           </CardFooter>
         </Card>
+      </div>
 
+      <div className="max-w-4xl mx-auto"> {/* Inventory card wrapper, now wider */}
         <Card className="w-full">
           <CardHeader>
             <CardTitle className="text-2xl text-center">Your Inventory</CardTitle>
