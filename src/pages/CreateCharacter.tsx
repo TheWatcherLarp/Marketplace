@@ -13,21 +13,16 @@ const CreateCharacter = () => {
   const [race, setRace] = useState('');
   const [guild, setGuild] = useState('');
   const [branch, setBranch] = useState('');
-  const [loading, setLoading] = useState(false); // Set to false initially as we're not checking for existing character here
+  const [guildRank, setGuildRank] = useState(''); // Reintroduced state for guild rank
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { session, refreshCharacter, activeCharacter, loadingSession } = useSession(); // Get activeCharacter and loadingSession
+  const { session, refreshCharacter, activeCharacter, loadingSession } = useSession();
 
-  // If session is loading or an active character already exists, this component should not be shown.
-  // The SessionContextProvider will handle the redirection.
   useEffect(() => {
     if (!loadingSession && activeCharacter) {
-      // If an active character is found after loading, navigate away.
-      // This handles cases where the user might manually navigate to /create-character
-      // but already has an active character.
       navigate('/home');
     }
   }, [loadingSession, activeCharacter, navigate]);
-
 
   const handleCreateCharacter = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +30,6 @@ const CreateCharacter = () => {
       showError('User not logged in.');
       return;
     }
-    // No need to check hasExistingCharacter here, SessionContextProvider handles it.
     if (!characterName.trim()) {
       showError('Character name cannot be empty.');
       return;
@@ -52,17 +46,47 @@ const CreateCharacter = () => {
       showError('Please select a branch.');
       return;
     }
+    if (!guildRank) { // Validate guild rank selection
+      showError('Please select a guild rank.');
+      return;
+    }
 
     setLoading(true);
 
-    const fixedGuildRank = 'apprentice'; // All new characters are apprentices
     let calculatedSocialRank = 1; // Default social rank
 
     if (guild === 'scout' || guild === 'mercenary') {
-      // For 'apprentice' in these guilds, social rank is 2
-      calculatedSocialRank = 2;
+      if (guildRank === 'apprentice') {
+        calculatedSocialRank = 2;
+      }
+      // Other ranks for scout/mercenary would default to 1 unless specified
+    } else if (guild === 'blacksmith') {
+      switch (guildRank) {
+        case 'apprentice':
+          calculatedSocialRank = 2;
+          break;
+        case 'journeyman':
+          calculatedSocialRank = 3;
+          break;
+        case 'junior guildsman':
+          calculatedSocialRank = 4;
+          break;
+        case 'guildsman':
+          calculatedSocialRank = 5;
+          break;
+        case 'high guildsman':
+          calculatedSocialRank = 6;
+          break;
+        case 'guild senior':
+          calculatedSocialRank = 7;
+          break;
+        case 'master':
+          calculatedSocialRank = 8;
+          break;
+        default:
+          calculatedSocialRank = 1; // Fallback for blacksmith if rank not matched
+      }
     }
-    // For other guilds, it remains the default of 1
 
     try {
       const { data: newCharacter, error } = await supabase
@@ -74,8 +98,8 @@ const CreateCharacter = () => {
           guild: guild,
           branch: branch,
           crowns: 10,
-          guild_rank: fixedGuildRank, // Use the fixed 'apprentice' rank
-          pennies: 0, // Ensure pennies are initialized to 0
+          guild_rank: guildRank, // Use the selected guildRank
+          pennies: 0,
           social_rank: calculatedSocialRank, // Use the calculated social_rank
         })
         .select('id');
@@ -106,9 +130,8 @@ const CreateCharacter = () => {
           }
         }
 
-        showSuccess(`Character '${characterName}' created successfully as an Apprentice!`);
-        await refreshCharacter(); // Force refresh of session context
-        // Navigation will now be handled by SessionContextProvider
+        showSuccess(`Character '${characterName}' created successfully as a ${guildRank.charAt(0).toUpperCase() + guildRank.slice(1)}!`);
+        await refreshCharacter();
       }
     } catch (error: any) {
       showError(`Error creating character: ${error.message}`);
@@ -117,8 +140,6 @@ const CreateCharacter = () => {
     }
   };
 
-  // If session is loading or an active character already exists, return null
-  // The SessionContextProvider will handle the redirection.
   if (loadingSession || activeCharacter) {
     return null;
   }
@@ -129,7 +150,7 @@ const CreateCharacter = () => {
         <CardHeader>
           <CardTitle className="text-2xl text-center">Create Your Character</CardTitle>
           <CardDescription className="text-center">
-            Give your adventure a name! All new characters start as Apprentices.
+            Give your adventure a name and choose your starting path!
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -202,6 +223,24 @@ const CreateCharacter = () => {
                   <SelectItem value="St Helens">St Helens</SelectItem>
                   <SelectItem value="Stockport">Stockport</SelectItem>
                   <SelectItem value="Tees Valley">Tees Valley</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {/* Reintroduced Guild Rank Select */}
+            <div>
+              <label htmlFor="guildRank" className="sr-only">Guild Rank</label>
+              <Select onValueChange={setGuildRank} value={guildRank} disabled={loading}>
+                <SelectTrigger id="guildRank" className="w-full">
+                  <SelectValue placeholder="Select Guild Rank" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="apprentice">Apprentice</SelectItem>
+                  <SelectItem value="journeyman">Journeyman</SelectItem>
+                  <SelectItem value="junior guildsman">Junior Guildsman</SelectItem>
+                  <SelectItem value="guildsman">Guildsman</SelectItem>
+                  <SelectItem value="high guildsman">High Guildsman</SelectItem>
+                  <SelectItem value="guild senior">Guild Senior</SelectItem>
+                  <SelectItem value="master">Master</SelectItem>
                 </SelectContent>
               </Select>
             </div>
