@@ -13,11 +13,11 @@ const CreateCharacter = () => {
   const [race, setRace] = useState('');
   const [guild, setGuild] = useState('');
   const [branch, setBranch] = useState('');
-  const [guildRank, setGuildRank] = useState(''); // New state for guild rank
+  // Removed guildRank state as it will be hardcoded to 'apprentice'
   const [loading, setLoading] = useState(true);
   const [hasExistingCharacter, setHasExistingCharacter] = useState(false);
   const navigate = useNavigate();
-  const { session, refreshCharacter } = useSession(); // Get refreshCharacter from context
+  const { session, refreshCharacter } = useSession();
 
   useEffect(() => {
     const checkExistingCharacter = async () => {
@@ -40,7 +40,6 @@ const CreateCharacter = () => {
 
         if (character) {
           setHasExistingCharacter(true);
-          // Do not navigate here. Let SessionContextProvider handle it.
           showError('You already have an active character.');
         }
       } catch (error: any) {
@@ -51,7 +50,7 @@ const CreateCharacter = () => {
     };
 
     checkExistingCharacter();
-  }, [session]); // Removed navigate from dependency array as it's not used for navigation here
+  }, [session]);
 
   const handleCreateCharacter = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,36 +78,17 @@ const CreateCharacter = () => {
       showError('Please select a branch.');
       return;
     }
-    if (!guildRank) { // Validate guild rank
-      showError('Please select a guild rank.');
-      return;
-    }
 
     setLoading(true);
 
+    const fixedGuildRank = 'apprentice'; // All new characters are apprentices
     let calculatedSocialRank = 1; // Default social rank
 
     if (guild === 'scout' || guild === 'mercenary') {
-      switch (guildRank) {
-        case 'apprentice':
-          calculatedSocialRank = 2;
-          break;
-        case 'guildsman':
-          calculatedSocialRank = 5;
-          break;
-        case 'high guildsman':
-          calculatedSocialRank = 6;
-          break;
-        case 'guild senior':
-          calculatedSocialRank = 7;
-          break;
-        case 'master':
-          calculatedSocialRank = 8;
-          break;
-        default:
-          calculatedSocialRank = 1; // Fallback if guildRank is not recognized
-      }
+      // For 'apprentice' in these guilds, social rank is 2
+      calculatedSocialRank = 2;
     }
+    // For other guilds, it remains the default of 1
 
     try {
       const { data: newCharacter, error } = await supabase
@@ -120,10 +100,11 @@ const CreateCharacter = () => {
           guild: guild,
           branch: branch,
           crowns: 10,
-          guild_rank: guildRank, // Insert the selected guild_rank
-          social_rank: calculatedSocialRank, // Insert the calculated social_rank
+          guild_rank: fixedGuildRank, // Use the fixed 'apprentice' rank
+          pennies: 0, // Ensure pennies are initialized to 0
+          social_rank: calculatedSocialRank, // Use the calculated social_rank
         })
-        .select('id'); // Select the ID of the newly created character
+        .select('id');
 
       if (error) {
         throw error;
@@ -148,13 +129,11 @@ const CreateCharacter = () => {
           if (permitError) {
             console.error('Error inserting permits:', permitError);
             showError(`Character created, but failed to assign permits: ${permitError.message}`);
-            // Continue even if permit assignment fails, character is still created
           }
         }
 
-        showSuccess(`Character '${characterName}' created successfully!`);
-        await refreshCharacter(); // Force refresh of session context
-        // Navigation will now be handled by SessionContextProvider
+        showSuccess(`Character '${characterName}' created successfully as an Apprentice!`);
+        await refreshCharacter();
       }
     } catch (error: any) {
       showError(`Error creating character: ${error.message}`);
@@ -172,7 +151,7 @@ const CreateCharacter = () => {
   }
 
   if (hasExistingCharacter) {
-    return null; // If character exists, SessionContextProvider will handle redirect
+    return null;
   }
 
   return (
@@ -181,7 +160,7 @@ const CreateCharacter = () => {
         <CardHeader>
           <CardTitle className="text-2xl text-center">Create Your Character</CardTitle>
           <CardDescription className="text-center">
-            Give your adventure a name!
+            Give your adventure a name! All new characters start as Apprentices.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -257,21 +236,7 @@ const CreateCharacter = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <label htmlFor="guildRank" className="sr-only">Guild Rank</label>
-              <Select onValueChange={setGuildRank} value={guildRank} disabled={loading}>
-                <SelectTrigger id="guildRank" className="w-full">
-                  <SelectValue placeholder="Select Guild Rank" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="apprentice">Apprentice</SelectItem>
-                  <SelectItem value="guildsman">Guildsman</SelectItem>
-                  <SelectItem value="high guildsman">High Guildsman</SelectItem>
-                  <SelectItem value="guild senior">Guild Senior</SelectItem>
-                  <SelectItem value="master">Master</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Removed the Guild Rank Select input */}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Creating...' : 'Create Character'}
             </Button>
