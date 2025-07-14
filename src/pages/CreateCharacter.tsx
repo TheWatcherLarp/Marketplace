@@ -85,7 +85,7 @@ const CreateCharacter = () => {
           permitsToInsert.push({ character_id: characterId, permit_type: 'blacksmith' });
         } else if (guild === 'alchemist') {
           permitsToInsert.push({ character_id: characterId, permit_type: 'alchemist' });
-        } else if (guild === 'mage') {
+        } else if (['thaumaturgy', 'demonologist', 'enchanter', 'necromancer'].includes(guild)) { // Updated for new mage guilds
           // No specific permit for mage yet, but can be added here if needed
         } else if (['sidhe', 'crowa', 'kharack', 'longstor', 'vleybor', 'rholbor', 'tralda', 'crowan rose'].includes(guild)) {
           // No specific permits for church/religious guilds by default, add if needed
@@ -182,7 +182,10 @@ const CreateCharacter = () => {
                   </SelectGroup>
                   <SelectGroup>
                     <SelectLabel>Mage Guilds</SelectLabel>
-                    <SelectItem value="mage">Mage</SelectItem>
+                    <SelectItem value="thaumaturgy">Thaumaturgy</SelectItem>
+                    <SelectItem value="demonologist">Demonologist</SelectItem>
+                    <SelectItem value="enchanter">Enchanter</SelectItem>
+                    <SelectItem value="necromancer">Necromancer</SelectItem>
                   </SelectGroup>
                   <SelectGroup>
                     <SelectLabel>Church Guilds</SelectLabel>
