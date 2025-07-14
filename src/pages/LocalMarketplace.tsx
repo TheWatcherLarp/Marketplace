@@ -686,21 +686,22 @@ const LocalMarketplace = () => {
 
       // Logic for stacking items based on category
       if (item.category === 'consumable') {
-        // Check if the character already has this consumable
-        const { data: existingItems, error: fetchExistingError } = await supabase
+        // Check if the character already has this consumable *from the local market*
+        const { data: existingLocalItems, error: fetchExistingLocalError } = await supabase
           .from('character_items')
           .select('id, quantity')
           .eq('character_id', activeCharacter.id)
           .eq('item_name', item.name)
-          .is('permit_required', item.permit_required); // Ensure it's the exact same item
+          .is('permit_required', item.permit_required)
+          .eq('is_local_market_item', true); // NEW: Check for local market flag
 
-        if (fetchExistingError) {
-          throw fetchExistingError;
+        if (fetchExistingLocalError) {
+          throw fetchExistingLocalError;
         }
 
-        if (existingItems && existingItems.length > 0) {
-          // If item exists, update its quantity
-          const existingItem = existingItems[0];
+        if (existingLocalItems && existingLocalItems.length > 0) {
+          // If local market item exists, update its quantity
+          const existingItem = existingLocalItems[0];
           const { error: updateItemError } = await supabase
             .from('character_items')
             .update({ quantity: existingItem.quantity + item.quantity })
@@ -710,7 +711,7 @@ const LocalMarketplace = () => {
             throw updateItemError;
           }
         } else {
-          // If item does not exist, insert a new one
+          // If no existing local market item, insert a new one
           const { error: insertItemError } = await supabase
             .from('character_items')
             .insert({
@@ -718,6 +719,7 @@ const LocalMarketplace = () => {
               item_name: item.name,
               quantity: item.quantity,
               permit_required: item.permit_required,
+              is_local_market_item: true, // NEW: Mark as local market item
             });
 
           if (insertItemError) {
@@ -733,6 +735,7 @@ const LocalMarketplace = () => {
             item_name: item.name,
             quantity: item.quantity,
             permit_required: item.permit_required,
+            is_local_market_item: true, // NEW: Mark as local market item
           });
 
         if (insertItemError) {

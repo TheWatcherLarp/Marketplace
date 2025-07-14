@@ -58,6 +58,7 @@ interface CharacterItem {
   acquired_at: string;
   crafter_user_id: string | null;
   permit_required: string | null;
+  is_local_market_item: boolean; // Added this property
 }
 
 interface CharacterPermit {
@@ -107,7 +108,7 @@ const CharacterInventory = () => {
       if (charData) {
         const { data: itemsData, error: itemsError } = await supabase
           .from('character_items')
-          .select('*, permit_required')
+          .select('*, permit_required, is_local_market_item') // Select the new column
           .eq('character_id', charData.id)
           .order('acquired_at', { ascending: false });
 
@@ -502,8 +503,9 @@ const CharacterInventory = () => {
                               setSellQuantity(1);
                               setShowSellDialog(true);
                             }}
+                            disabled={item.is_local_market_item} // Disable if from local market
                           >
-                            Sell
+                            {item.is_local_market_item ? 'Cannot Sell' : 'Sell'}
                           </Button>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
