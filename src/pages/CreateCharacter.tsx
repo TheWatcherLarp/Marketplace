@@ -78,13 +78,15 @@ const CreateCharacter = () => {
         const characterId = newCharacter[0].id;
         const permitsToInsert: { character_id: string; permit_type: string }[] = [];
 
-        if (guild === 'scout' || guild === 'mercenary' || guild === 'black knight' || guild === 'sentinel' || guild === 'griffin knight' || guild === 'grey knight') { // Added new knight types
+        if (guild === 'scout' || guild === 'mercenary' || guild === 'black knight' || guild === 'sentinel' || guild === 'griffin knight' || guild === 'grey knight') {
           permitsToInsert.push({ character_id: characterId, permit_type: 'weapon' });
           permitsToInsert.push({ character_id: characterId, permit_type: 'armour' });
         } else if (guild === 'blacksmith') {
           permitsToInsert.push({ character_id: characterId, permit_type: 'blacksmith' });
         } else if (guild === 'alchemist') {
           permitsToInsert.push({ character_id: characterId, permit_type: 'alchemist' });
+        } else if (guild === 'mage') { // No specific permit for mage yet, but can be added here if needed
+          // permitsToInsert.push({ character_id: characterId, permit_type: 'magic' }); // Example for a new permit type
         }
 
         if (permitsToInsert.length > 0) {
@@ -173,6 +175,10 @@ const CreateCharacter = () => {
                     <SelectLabel>Crafting Guilds</SelectLabel>
                     <SelectItem value="alchemist">Alchemist</SelectItem>
                     <SelectItem value="blacksmith">Blacksmith</SelectItem>
+                  </SelectGroup>
+                  <SelectGroup>
+                    <SelectLabel>Mage Guilds</SelectLabel>
+                    <SelectItem value="mage">Mage</SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
