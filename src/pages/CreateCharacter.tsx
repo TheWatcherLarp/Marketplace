@@ -17,7 +17,7 @@ const CreateCharacter = () => {
   const [loading, setLoading] = useState(true);
   const [hasExistingCharacter, setHasExistingCharacter] = useState(false);
   const navigate = useNavigate();
-  const { session } = useSession();
+  const { session, refreshCharacter } = useSession(); // Get refreshCharacter from context
 
   useEffect(() => {
     const checkExistingCharacter = async () => {
@@ -40,8 +40,8 @@ const CreateCharacter = () => {
 
         if (character) {
           setHasExistingCharacter(true);
-          showError('You already have an active character. Redirecting to inventory.');
-          navigate('/character-inventory');
+          // Do not navigate here. Let SessionContextProvider handle it.
+          showError('You already have an active character.');
         }
       } catch (error: any) {
         showError(`Error checking existing character: ${error.message}`);
@@ -51,7 +51,7 @@ const CreateCharacter = () => {
     };
 
     checkExistingCharacter();
-  }, [session, navigate]);
+  }, [session]); // Removed navigate from dependency array as it's not used for navigation here
 
   const handleCreateCharacter = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -153,7 +153,8 @@ const CreateCharacter = () => {
         }
 
         showSuccess(`Character '${characterName}' created successfully!`);
-        navigate('/character-inventory');
+        await refreshCharacter(); // Force refresh of session context
+        // Navigation will now be handled by SessionContextProvider
       }
     } catch (error: any) {
       showError(`Error creating character: ${error.message}`);
@@ -171,7 +172,7 @@ const CreateCharacter = () => {
   }
 
   if (hasExistingCharacter) {
-    return null;
+    return null; // If character exists, SessionContextProvider will handle redirect
   }
 
   return (
