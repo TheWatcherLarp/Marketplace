@@ -549,7 +549,7 @@ const CharacterInventory = () => {
             <DialogDescription>
               Set the price, category, and quantity to sell for your item.
             </DialogDescription>
-          </DialogDescription>
+          </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <label htmlFor="crowns" className="text-right">
