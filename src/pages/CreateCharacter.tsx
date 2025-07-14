@@ -13,7 +13,7 @@ const CreateCharacter = () => {
   const [race, setRace] = useState('');
   const [guild, setGuild] = useState('');
   const [branch, setBranch] = useState('');
-  const [socialRank, setSocialRank] = useState('1'); // New state for social rank, default to '1'
+  const [guildRank, setGuildRank] = useState(''); // New state for guild rank
   const [loading, setLoading] = useState(true);
   const [hasExistingCharacter, setHasExistingCharacter] = useState(false);
   const navigate = useNavigate();
@@ -79,12 +79,37 @@ const CreateCharacter = () => {
       showError('Please select a branch.');
       return;
     }
-    if (!socialRank) {
-      showError('Please select a social rank.');
+    if (!guildRank) { // Validate guild rank
+      showError('Please select a guild rank.');
       return;
     }
 
     setLoading(true);
+
+    let calculatedSocialRank = 1; // Default social rank
+
+    if (guild === 'scout' || guild === 'mercenary') {
+      switch (guildRank) {
+        case 'apprentice':
+          calculatedSocialRank = 2;
+          break;
+        case 'guildsman':
+          calculatedSocialRank = 5;
+          break;
+        case 'high guildsman':
+          calculatedSocialRank = 6;
+          break;
+        case 'guild senior':
+          calculatedSocialRank = 7;
+          break;
+        case 'master':
+          calculatedSocialRank = 8;
+          break;
+        default:
+          calculatedSocialRank = 1; // Fallback if guildRank is not recognized
+      }
+    }
+
     try {
       const { data: newCharacter, error } = await supabase
         .from('characters')
@@ -95,7 +120,8 @@ const CreateCharacter = () => {
           guild: guild,
           branch: branch,
           crowns: 10,
-          social_rank: parseInt(socialRank), // Insert social_rank
+          guild_rank: guildRank, // Insert the selected guild_rank
+          social_rank: calculatedSocialRank, // Insert the calculated social_rank
         })
         .select('id'); // Select the ID of the newly created character
 
@@ -231,17 +257,17 @@ const CreateCharacter = () => {
               </Select>
             </div>
             <div>
-              <label htmlFor="socialRank" className="sr-only">Social Rank</label>
-              <Select onValueChange={setSocialRank} value={socialRank} disabled={loading}>
-                <SelectTrigger id="socialRank" className="w-full">
-                  <SelectValue placeholder="Select Social Rank (1-12)" />
+              <label htmlFor="guildRank" className="sr-only">Guild Rank</label>
+              <Select onValueChange={setGuildRank} value={guildRank} disabled={loading}>
+                <SelectTrigger id="guildRank" className="w-full">
+                  <SelectValue placeholder="Select Guild Rank" />
                 </SelectTrigger>
                 <SelectContent>
-                  {Array.from({ length: 12 }, (_, i) => i + 1).map((rank) => (
-                    <SelectItem key={rank} value={String(rank)}>
-                      {rank}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="apprentice">Apprentice</SelectItem>
+                  <SelectItem value="guildsman">Guildsman</SelectItem>
+                  <SelectItem value="high guildsman">High Guildsman</SelectItem>
+                  <SelectItem value="guild senior">Guild Senior</SelectItem>
+                  <SelectItem value="master">Master</SelectItem>
                 </SelectContent>
               </Select>
             </div>
