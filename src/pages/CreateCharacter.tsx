@@ -78,7 +78,7 @@ const CreateCharacter = () => {
         const characterId = newCharacter[0].id;
         const permitsToInsert: { character_id: string; permit_type: string }[] = [];
 
-        if (guild === 'scout' || guild === 'mercenary') {
+        if (guild === 'scout' || guild === 'mercenary' || guild === 'black knight') { // Added 'black knight'
           permitsToInsert.push({ character_id: characterId, permit_type: 'weapon' });
           permitsToInsert.push({ character_id: characterId, permit_type: 'armour' });
         } else if (guild === 'blacksmith') {
@@ -161,6 +161,10 @@ const CreateCharacter = () => {
                     <SelectLabel>Martial Guilds</SelectLabel>
                     <SelectItem value="mercenary">Mercenary</SelectItem>
                     <SelectItem value="scout">Scout</SelectItem>
+                  </SelectGroup>
+                  <SelectGroup>
+                    <SelectLabel>Knights</SelectLabel>
+                    <SelectItem value="black knight">Black Knight</SelectItem>
                   </SelectGroup>
                   <SelectGroup>
                     <SelectLabel>Crafting Guilds</SelectLabel>
