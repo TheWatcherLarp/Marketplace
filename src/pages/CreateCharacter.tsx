@@ -13,7 +13,7 @@ const CreateCharacter = () => {
   const [race, setRace] = useState('');
   const [guild, setGuild] = useState('');
   const [branch, setBranch] = useState('');
-  const [guildRank, setGuildRank] = useState(''); // Reintroduced state for guild rank
+  const [guildRank, setGuildRank] = useState(''); // State for guild rank, will be set automatically for blacksmith
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { session, refreshCharacter, activeCharacter, loadingSession } = useSession();
@@ -23,6 +23,16 @@ const CreateCharacter = () => {
       navigate('/home');
     }
   }, [loadingSession, activeCharacter, navigate]);
+
+  // Effect to set default guild rank if guild is Blacksmith
+  useEffect(() => {
+    if (guild === 'blacksmith') {
+      setGuildRank('apprentice');
+    } else {
+      // Reset guildRank if changing away from blacksmith, or if it's not set yet
+      setGuildRank('');
+    }
+  }, [guild]);
 
   const handleCreateCharacter = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,46 +56,33 @@ const CreateCharacter = () => {
       showError('Please select a branch.');
       return;
     }
-    if (!guildRank) { // Validate guild rank selection
+    if (!guildRank) { // Validate guild rank selection (will be set for blacksmith automatically)
       showError('Please select a guild rank.');
       return;
     }
 
     setLoading(true);
 
+    // Determine the effective guild rank for character creation
+    const effectiveGuildRank = guild === 'blacksmith' ? 'apprentice' : guildRank;
+
     let calculatedSocialRank = 1; // Default social rank
 
-    if (guild === 'scout' || guild === 'mercenary') {
-      if (guildRank === 'apprentice') {
-        calculatedSocialRank = 2;
-      }
-      // Other ranks for scout/mercenary would default to 1 unless specified
-    } else if (guild === 'blacksmith') {
-      switch (guildRank) {
-        case 'apprentice':
-          calculatedSocialRank = 2;
-          break;
-        case 'journeyman':
-          calculatedSocialRank = 3;
-          break;
-        case 'junior guildsman':
-          calculatedSocialRank = 4;
-          break;
-        case 'guildsman':
-          calculatedSocialRank = 5;
-          break;
-        case 'high guildsman':
-          calculatedSocialRank = 6;
-          break;
-        case 'guild senior':
-          calculatedSocialRank = 7;
-          break;
-        case 'master':
-          calculatedSocialRank = 8;
-          break;
-        default:
-          calculatedSocialRank = 1; // Fallback for blacksmith if rank not matched
-      }
+    // Simplified social rank calculation based on effectiveGuildRank
+    if (effectiveGuildRank === 'apprentice') {
+      calculatedSocialRank = 2;
+    } else if (effectiveGuildRank === 'journeyman') {
+      calculatedSocialRank = 3;
+    } else if (effectiveGuildRank === 'junior guildsman') {
+      calculatedSocialRank = 4;
+    } else if (effectiveGuildRank === 'guildsman') {
+      calculatedSocialRank = 5;
+    } else if (effectiveGuildRank === 'high guildsman') {
+      calculatedSocialRank = 6;
+    } else if (effectiveGuildRank === 'guild senior') {
+      calculatedSocialRank = 7;
+    } else if (effectiveGuildRank === 'master') {
+      calculatedSocialRank = 8;
     }
 
     try {
@@ -98,7 +95,7 @@ const CreateCharacter = () => {
           guild: guild,
           branch: branch,
           crowns: 10,
-          guild_rank: guildRank, // Use the selected guildRank
+          guild_rank: effectiveGuildRank, // Use the effective guild rank
           pennies: 0,
           social_rank: calculatedSocialRank, // Use the calculated social_rank
         })
@@ -130,7 +127,7 @@ const CreateCharacter = () => {
           }
         }
 
-        showSuccess(`Character '${characterName}' created successfully as a ${guildRank.charAt(0).toUpperCase() + guildRank.slice(1)}!`);
+        showSuccess(`Character '${characterName}' created successfully as a ${effectiveGuildRank.charAt(0).toUpperCase() + effectiveGuildRank.slice(1)}!`);
         await refreshCharacter();
       }
     } catch (error: any) {
@@ -226,24 +223,26 @@ const CreateCharacter = () => {
                 </SelectContent>
               </Select>
             </div>
-            {/* Reintroduced Guild Rank Select */}
-            <div>
-              <label htmlFor="guildRank" className="sr-only">Guild Rank</label>
-              <Select onValueChange={setGuildRank} value={guildRank} disabled={loading}>
-                <SelectTrigger id="guildRank" className="w-full">
-                  <SelectValue placeholder="Select Guild Rank" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="apprentice">Apprentice</SelectItem>
-                  <SelectItem value="journeyman">Journeyman</SelectItem>
-                  <SelectItem value="junior guildsman">Junior Guildsman</SelectItem>
-                  <SelectItem value="guildsman">Guildsman</SelectItem>
-                  <SelectItem value="high guildsman">High Guildsman</SelectItem>
-                  <SelectItem value="guild senior">Guild Senior</SelectItem>
-                  <SelectItem value="master">Master</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Conditionally render Guild Rank Select based on selected guild */}
+            {guild !== 'blacksmith' && (
+              <div>
+                <label htmlFor="guildRank" className="sr-only">Guild Rank</label>
+                <Select onValueChange={setGuildRank} value={guildRank} disabled={loading}>
+                  <SelectTrigger id="guildRank" className="w-full">
+                    <SelectValue placeholder="Select Guild Rank" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="apprentice">Apprentice</SelectItem>
+                    <SelectItem value="journeyman">Journeyman</SelectItem>
+                    <SelectItem value="junior guildsman">Junior Guildsman</SelectItem>
+                    <SelectItem value="guildsman">Guildsman</SelectItem>
+                    <SelectItem value="high guildsman">High Guildsman</SelectItem>
+                    <SelectItem value="guild senior">Guild Senior</SelectItem>
+                    <SelectItem value="master">Master</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Creating...' : 'Create Character'}
             </Button>
