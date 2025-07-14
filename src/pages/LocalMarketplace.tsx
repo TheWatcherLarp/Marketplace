@@ -806,9 +806,7 @@ const LocalMarketplace = () => {
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                       Category: {item.category.charAt(0).toUpperCase() + item.category.slice(1)}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {item.description}
-                    </p>
+                    {/* Removed item.description */}
                     {requiresPermit && (
                       <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                         Requires: <Badge variant="outline" className="capitalize">{item.permit_required} Permit</Badge>
