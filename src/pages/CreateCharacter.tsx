@@ -13,7 +13,6 @@ const CreateCharacter = () => {
   const [race, setRace] = useState('');
   const [guild, setGuild] = useState('');
   const [branch, setBranch] = useState('');
-  // Removed guildRank state as it will now be hardcoded to 'apprentice'
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { session, refreshCharacter, activeCharacter, loadingSession } = useSession();
@@ -24,7 +23,40 @@ const CreateCharacter = () => {
     }
   }, [loadingSession, activeCharacter, navigate]);
 
-  // Removed useEffect for setting default guild rank as it's no longer needed.
+  // Reset guild if the selected race makes the current guild invalid
+  useEffect(() => {
+    if (race && guild && isGuildDisabledForRace(race, guild)) {
+      setGuild('');
+    }
+  }, [race, guild]);
+
+  const isGuildDisabledForRace = (selectedRace: string, guildValue: string) => {
+    switch (selectedRace) {
+      case 'dwarf':
+        return [
+          'guard', 'forester', 'thaumaturgy', 'demonologist', 'enchanter', 'necromancer',
+          'griffin knight', 'black knight', 'grey knight'
+        ].includes(guildValue);
+      case 'elf':
+        return [
+          'guard', 'forester', 'alchemist', 'demonologist', 'necromancer',
+          'griffin knight', 'black knight', 'grey knight'
+        ].includes(guildValue);
+      case 'half elf':
+        return [
+          'guard', 'forester', 'alchemist', 'thaumaturgy', 'demonologist', 'enchanter', 'necromancer',
+          'griffin knight', 'black knight'
+        ].includes(guildValue);
+      case 'halfling': // New halfling restrictions
+        return [
+          'guard', 'forester', 'thaumaturgy', 'demonologist', 'enchanter', 'necromancer',
+          'griffin knight', 'black knight', 'grey knight'
+        ].includes(guildValue);
+      case 'human':
+      default:
+        return false; // Humans can be any guild, and default case for other races
+    }
+  };
 
   const handleCreateCharacter = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +78,10 @@ const CreateCharacter = () => {
     }
     if (!branch) {
       showError('Please select a branch.');
+      return;
+    }
+    if (isGuildDisabledForRace(race, guild)) {
+      showError(`The selected guild is not available for the ${race} race.`);
       return;
     }
 
@@ -78,18 +114,18 @@ const CreateCharacter = () => {
         const characterId = newCharacter[0].id;
         const permitsToInsert: { character_id: string; permit_type: string }[] = [];
 
-        if (guild === 'scout' || guild === 'mercenary' || guild === 'black knight' || guild === 'sentinel' || guild === 'griffin knight' || guild === 'grey knight') {
+        if (['scout', 'mercenary', 'black knight', 'sentinel', 'griffin knight', 'grey knight'].includes(guild)) {
           permitsToInsert.push({ character_id: characterId, permit_type: 'weapon' });
           permitsToInsert.push({ character_id: characterId, permit_type: 'armour' });
         } else if (guild === 'blacksmith') {
           permitsToInsert.push({ character_id: characterId, permit_type: 'blacksmith' });
         } else if (guild === 'alchemist') {
           permitsToInsert.push({ character_id: characterId, permit_type: 'alchemist' });
-        } else if (['thaumaturgy', 'demonologist', 'enchanter', 'necromancer'].includes(guild)) { // Updated for new mage guilds
+        } else if (['thaumaturgy', 'demonologist', 'enchanter', 'necromancer'].includes(guild)) {
           // No specific permit for mage yet, but can be added here if needed
         } else if (['sidhe', 'crowa', 'kharack', 'longstor', 'vleybor', 'rholbor', 'tralda', 'crowan rose'].includes(guild)) {
           // No specific permits for church/religious guilds by default, add if needed
-        } else if (guild === 'guard' || guild === 'forester') { // Added for Lawman guilds
+        } else if (['guard', 'forester'].includes(guild)) {
           // No specific permits for Lawman guilds by default, add if needed
         }
 
@@ -152,7 +188,7 @@ const CreateCharacter = () => {
                   <SelectItem value="elf">Elf</SelectItem>
                   <SelectItem value="half elf">Half Elf</SelectItem>
                   <SelectItem value="dwarf">Dwarf</SelectItem>
-                  <SelectItem value="halfling">Halfling</SelectItem>
+                  <SelectItem value="halfling">Halfling</SelectItem> {/* Added Halfling */}
                 </SelectContent>
               </Select>
             </div>
@@ -165,46 +201,46 @@ const CreateCharacter = () => {
                 <SelectContent>
                   <SelectGroup>
                     <SelectLabel>Martial Guilds</SelectLabel>
-                    <SelectItem value="mercenary">Mercenary</SelectItem>
-                    <SelectItem value="scout">Scout</SelectItem>
+                    <SelectItem value="mercenary" disabled={isGuildDisabledForRace(race, 'mercenary')}>Mercenary</SelectItem>
+                    <SelectItem value="scout" disabled={isGuildDisabledForRace(race, 'scout')}>Scout</SelectItem>
                   </SelectGroup>
                   <SelectGroup>
                     <SelectLabel>Knights</SelectLabel>
-                    <SelectItem value="black knight">Black Knight</SelectItem>
-                    <SelectItem value="sentinel">Sentinel</SelectItem>
-                    <SelectItem value="griffin knight">Griffin Knight</SelectItem>
-                    <SelectItem value="grey knight">Grey Knight</SelectItem>
+                    <SelectItem value="black knight" disabled={isGuildDisabledForRace(race, 'black knight')}>Black Knight</SelectItem>
+                    <SelectItem value="sentinel" disabled={isGuildDisabledForRace(race, 'sentinel')}>Sentinel</SelectItem>
+                    <SelectItem value="griffin knight" disabled={isGuildDisabledForRace(race, 'griffin knight')}>Griffin Knight</SelectItem>
+                    <SelectItem value="grey knight" disabled={isGuildDisabledForRace(race, 'grey knight')}>Grey Knight</SelectItem>
                   </SelectGroup>
                   <SelectGroup>
                     <SelectLabel>Crafting Guilds</SelectLabel>
-                    <SelectItem value="alchemist">Alchemist</SelectItem>
-                    <SelectItem value="blacksmith">Blacksmith</SelectItem>
+                    <SelectItem value="alchemist" disabled={isGuildDisabledForRace(race, 'alchemist')}>Alchemist</SelectItem>
+                    <SelectItem value="blacksmith" disabled={isGuildDisabledForRace(race, 'blacksmith')}>Blacksmith</SelectItem>
                   </SelectGroup>
                   <SelectGroup>
                     <SelectLabel>Mage Guilds</SelectLabel>
-                    <SelectItem value="thaumaturgy">Thaumaturgy</SelectItem>
-                    <SelectItem value="demonologist">Demonologist</SelectItem>
-                    <SelectItem value="enchanter">Enchanter</SelectItem>
-                    <SelectItem value="necromancer">Necromancer</SelectItem>
+                    <SelectItem value="thaumaturgy" disabled={isGuildDisabledForRace(race, 'thaumaturgy')}>Thaumaturgy</SelectItem>
+                    <SelectItem value="demonologist" disabled={isGuildDisabledForRace(race, 'demonologist')}>Demonologist</SelectItem>
+                    <SelectItem value="enchanter" disabled={isGuildDisabledForRace(race, 'enchanter')}>Enchanter</SelectItem>
+                    <SelectItem value="necromancer" disabled={isGuildDisabledForRace(race, 'necromancer')}>Necromancer</SelectItem>
                   </SelectGroup>
                   <SelectGroup>
                     <SelectLabel>Church Guilds</SelectLabel>
-                    <SelectItem value="sidhe">Sidhe</SelectItem>
-                    <SelectItem value="crowa">Crowa</SelectItem>
-                    <SelectItem value="kharack">Kharack</SelectItem>
-                    <SelectItem value="longstor">Longstor</SelectItem>
-                    <SelectItem value="vleybor">Vleybor</SelectItem>
-                    <SelectItem value="rholbor">Rholbor</SelectItem>
-                    <SelectItem value="tralda">Tralda</SelectItem>
+                    <SelectItem value="sidhe" disabled={isGuildDisabledForRace(race, 'sidhe')}>Sidhe</SelectItem>
+                    <SelectItem value="crowa" disabled={isGuildDisabledForRace(race, 'crowa')}>Crowa</SelectItem>
+                    <SelectItem value="kharack" disabled={isGuildDisabledForRace(race, 'kharack')}>Kharack</SelectItem>
+                    <SelectItem value="longstor" disabled={isGuildDisabledForRace(race, 'longstor')}>Longstor</SelectItem>
+                    <SelectItem value="vleybor" disabled={isGuildDisabledForRace(race, 'vleybor')}>Vleybor</SelectItem>
+                    <SelectItem value="rholbor" disabled={isGuildDisabledForRace(race, 'rholbor')}>Rholbor</SelectItem>
+                    <SelectItem value="tralda" disabled={isGuildDisabledForRace(race, 'tralda')}>Tralda</SelectItem>
                   </SelectGroup>
                   <SelectGroup>
                     <SelectLabel>Religious Order</SelectLabel>
-                    <SelectItem value="crowan rose">Crowan Rose</SelectItem>
+                    <SelectItem value="crowan rose" disabled={isGuildDisabledForRace(race, 'crowan rose')}>Crowan Rose</SelectItem>
                   </SelectGroup>
                   <SelectGroup>
                     <SelectLabel>Lawman</SelectLabel>
-                    <SelectItem value="guard">Guard</SelectItem>
-                    <SelectItem value="forester">Forester</SelectItem>
+                    <SelectItem value="guard" disabled={isGuildDisabledForRace(race, 'guard')}>Guard</SelectItem>
+                    <SelectItem value="forester" disabled={isGuildDisabledForRace(race, 'forester')}>Forester</SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
@@ -240,7 +276,6 @@ const CreateCharacter = () => {
                 </SelectContent>
               </Select>
             </div>
-            {/* Guild Rank Select is now completely removed */}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Creating...' : 'Create Character'}
             </Button>
