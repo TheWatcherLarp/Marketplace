@@ -684,23 +684,64 @@ const LocalMarketplace = () => {
         throw updateCharError;
       }
 
-      // Add item to character's inventory, including permit_required
-      const { error: insertItemError } = await supabase
-        .from('character_items')
-        .insert({
-          character_id: activeCharacter.id,
-          item_name: item.name,
-          quantity: item.quantity,
-          permit_required: item.permit_required, // Pass permit_required
-          // crafter_user_id is null for shop items
-        });
+      // Logic for stacking items based on category
+      if (item.category === 'consumable') {
+        // Check if the character already has this consumable
+        const { data: existingItems, error: fetchExistingError } = await supabase
+          .from('character_items')
+          .select('id, quantity')
+          .eq('character_id', activeCharacter.id)
+          .eq('item_name', item.name)
+          .is('permit_required', item.permit_required); // Ensure it's the exact same item
 
-      if (insertItemError) {
-        throw insertItemError;
+        if (fetchExistingError) {
+          throw fetchExistingError;
+        }
+
+        if (existingItems && existingItems.length > 0) {
+          // If item exists, update its quantity
+          const existingItem = existingItems[0];
+          const { error: updateItemError } = await supabase
+            .from('character_items')
+            .update({ quantity: existingItem.quantity + item.quantity })
+            .eq('id', existingItem.id);
+
+          if (updateItemError) {
+            throw updateItemError;
+          }
+        } else {
+          // If item does not exist, insert a new one
+          const { error: insertItemError } = await supabase
+            .from('character_items')
+            .insert({
+              character_id: activeCharacter.id,
+              item_name: item.name,
+              quantity: item.quantity,
+              permit_required: item.permit_required,
+            });
+
+          if (insertItemError) {
+            throw insertItemError;
+          }
+        }
+      } else {
+        // For non-consumable items, always insert a new entry
+        const { error: insertItemError } = await supabase
+          .from('character_items')
+          .insert({
+            character_id: activeCharacter.id,
+            item_name: item.name,
+            quantity: item.quantity,
+            permit_required: item.permit_required,
+          });
+
+        if (insertItemError) {
+          throw insertItemError;
+        }
       }
 
       showSuccess(`Successfully purchased ${item.name}!`);
-      // Refresh character data to show updated currency
+      // Refresh character data to show updated currency and items
       fetchCharacterAndSetItems();
     } catch (error: any) {
       showError(`Failed to buy item: ${error.message}`);
@@ -806,7 +847,6 @@ const LocalMarketplace = () => {
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                       Category: {item.category.charAt(0).toUpperCase() + item.category.slice(1)}
                     </p>
-                    {/* Removed item.description */}
                     {requiresPermit && (
                       <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                         Requires: <Badge variant="outline" className="capitalize">{item.permit_required} Permit</Badge>
