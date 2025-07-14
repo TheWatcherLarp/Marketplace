@@ -70,7 +70,7 @@ interface CharacterPermit {
 }
 
 const CharacterInventory = () => {
-  const { session } = useSession();
+  const { session, refreshCharacter } = useSession(); // Destructure refreshCharacter
   const [character, setCharacter] = useState<Character | null>(null);
   const [characterItems, setCharacterItems] = useState<CharacterItem[]>([]);
   const [characterPermits, setCharacterPermits] = useState<CharacterPermit[]>([]);
@@ -161,7 +161,7 @@ const CharacterInventory = () => {
       }
 
       showSuccess(`Character '${character.name}' has been retired.`);
-      setCharacter(null);
+      await refreshCharacter(); // Refresh session context after retirement
       navigate('/create-character');
     } catch (error: any) {
       showError(`Failed to retire character: ${error.message}`);
@@ -184,7 +184,7 @@ const CharacterInventory = () => {
       }
 
       showSuccess(`Character '${character.name}' has passed away.`);
-      setCharacter(null);
+      await refreshCharacter(); // Refresh session context after death
       navigate('/create-character');
     } catch (error: any) {
       showError(`Failed to declare character deceased: ${error.message}`);
@@ -549,7 +549,7 @@ const CharacterInventory = () => {
             <DialogDescription>
               Set the price, category, and quantity to sell for your item.
             </DialogDescription>
-          </DialogHeader>
+          </DialogDescription>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <label htmlFor="crowns" className="text-right">

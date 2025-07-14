@@ -1,4 +1,4 @@
-import React, { useState, useEffect, createContext, useContext } from 'react';
+import React, { useState, useEffect, createContext, useContext, useCallback } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -32,6 +32,7 @@ interface SessionContextType {
   activeCharacter: Character | null;
   activeCharacterPermits: string[];
   loadingSession: boolean;
+  refreshCharacter: () => Promise<void>; // Added refreshCharacter function
 }
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
@@ -44,43 +45,52 @@ export const SessionContextProvider: React.FC<{ children: React.ReactNode }> = (
   const navigate = useNavigate();
   const location = useLocation();
 
-  useEffect(() => {
-    const fetchCharacterData = async (userId: string) => {
-      try {
-        const { data: character, error: charError } = await supabase
-          .from('characters')
-          .select('id, name, race, guild, branch, created_at, retired_at, crowns, pennies, guild_rank, user_id, social_rank') // Select social_rank
-          .eq('user_id', userId)
-          .is('retired_at', null)
-          .single();
+  const fetchCharacterData = useCallback(async (userId: string) => {
+    try {
+      const { data: character, error: charError } = await supabase
+        .from('characters')
+        .select('id, name, race, guild, branch, created_at, retired_at, crowns, pennies, guild_rank, user_id, social_rank')
+        .eq('user_id', userId)
+        .is('retired_at', null)
+        .single();
 
-        if (charError && charError.code !== 'PGRST116') { // PGRST116 means no rows found
-          throw charError;
+      if (charError && charError.code !== 'PGRST116') { // PGRST116 means no rows found
+        throw charError;
+      }
+
+      setActiveCharacter(character || null);
+
+      if (character) {
+        const { data: permitsData, error: permitsError } = await supabase
+          .from('character_permits')
+          .select('permit_type')
+          .eq('character_id', character.id);
+
+        if (permitsError) {
+          throw permitsError;
         }
-
-        setActiveCharacter(character || null);
-
-        if (character) {
-          const { data: permitsData, error: permitsError } = await supabase
-            .from('character_permits')
-            .select('permit_type')
-            .eq('character_id', character.id);
-
-          if (permitsError) {
-            throw permitsError;
-          }
-          setActiveCharacterPermits(permitsData?.map(p => p.permit_type) || []);
-        } else {
-          setActiveCharacterPermits([]);
-        }
-      } catch (error: any) {
-        console.error('Error fetching character or permits in SessionContextProvider:', error.message);
-        showError(`Failed to load character data: ${error.message}`);
-        setActiveCharacter(null);
+        setActiveCharacterPermits(permitsData?.map(p => p.permit_type) || []);
+      } else {
         setActiveCharacterPermits([]);
       }
-    };
+    } catch (error: any) {
+      console.error('Error fetching character or permits in SessionContextProvider:', error.message);
+      showError(`Failed to load character data: ${error.message}`);
+      setActiveCharacter(null);
+      setActiveCharacterPermits([]);
+    }
+  }, []);
 
+  const refreshCharacter = useCallback(async () => {
+    if (session?.user?.id) {
+      await fetchCharacterData(session.user.id);
+    } else {
+      setActiveCharacter(null);
+      setActiveCharacterPermits([]);
+    }
+  }, [session, fetchCharacterData]);
+
+  useEffect(() => {
     const handleAuthAndCharacterCheck = async () => {
       setLoadingSession(true);
       const { data: { session: initialSession } } = await supabase.auth.getSession();
@@ -109,7 +119,7 @@ export const SessionContextProvider: React.FC<{ children: React.ReactNode }> = (
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [fetchCharacterData]);
 
   useEffect(() => {
     const currentPath = location.pathname;
@@ -124,12 +134,12 @@ export const SessionContextProvider: React.FC<{ children: React.ReactNode }> = (
         if (!allowedAuthPaths.includes(currentPath)) {
           navigate('/home');
         }
-      } else {
+      } else { // session exists, but no activeCharacter
         if (!isCreateCharacterPage) {
           navigate('/create-character');
         }
       }
-    } else {
+    } else { // no session
       if (!isLoginPage) {
         navigate('/login');
       }
@@ -145,7 +155,7 @@ export const SessionContextProvider: React.FC<{ children: React.ReactNode }> = (
   }
 
   return (
-    <SessionContext.Provider value={{ session, activeCharacter, activeCharacterPermits, loadingSession }}>
+    <SessionContext.Provider value={{ session, activeCharacter, activeCharacterPermits, loadingSession, refreshCharacter }}>
       {children}
     </SessionContext.Provider>
   );
