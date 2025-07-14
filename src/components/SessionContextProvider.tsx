@@ -17,6 +17,7 @@ interface Character {
   pennies: number;
   guild_rank: string;
   user_id: string;
+  social_rank: number; // Added social_rank
 }
 
 interface CharacterPermit {
@@ -48,7 +49,7 @@ export const SessionContextProvider: React.FC<{ children: React.ReactNode }> = (
       try {
         const { data: character, error: charError } = await supabase
           .from('characters')
-          .select('id, name, race, guild, branch, created_at, retired_at, crowns, pennies, guild_rank, user_id')
+          .select('id, name, race, guild, branch, created_at, retired_at, crowns, pennies, guild_rank, user_id, social_rank') // Select social_rank
           .eq('user_id', userId)
           .is('retired_at', null)
           .single();

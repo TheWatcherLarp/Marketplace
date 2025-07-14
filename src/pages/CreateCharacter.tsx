@@ -13,6 +13,7 @@ const CreateCharacter = () => {
   const [race, setRace] = useState('');
   const [guild, setGuild] = useState('');
   const [branch, setBranch] = useState('');
+  const [socialRank, setSocialRank] = useState('1'); // New state for social rank, default to '1'
   const [loading, setLoading] = useState(true);
   const [hasExistingCharacter, setHasExistingCharacter] = useState(false);
   const navigate = useNavigate();
@@ -78,12 +79,24 @@ const CreateCharacter = () => {
       showError('Please select a branch.');
       return;
     }
+    if (!socialRank) {
+      showError('Please select a social rank.');
+      return;
+    }
 
     setLoading(true);
     try {
       const { data: newCharacter, error } = await supabase
         .from('characters')
-        .insert({ user_id: session.user.id, name: characterName.trim(), race: race, guild: guild, branch: branch, crowns: 10 })
+        .insert({
+          user_id: session.user.id,
+          name: characterName.trim(),
+          race: race,
+          guild: guild,
+          branch: branch,
+          crowns: 10,
+          social_rank: parseInt(socialRank), // Insert social_rank
+        })
         .select('id'); // Select the ID of the newly created character
 
       if (error) {
@@ -214,6 +227,21 @@ const CreateCharacter = () => {
                   <SelectItem value="St Helens">St Helens</SelectItem>
                   <SelectItem value="Stockport">Stockport</SelectItem>
                   <SelectItem value="Tees Valley">Tees Valley</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label htmlFor="socialRank" className="sr-only">Social Rank</label>
+              <Select onValueChange={setSocialRank} value={socialRank} disabled={loading}>
+                <SelectTrigger id="socialRank" className="w-full">
+                  <SelectValue placeholder="Select Social Rank (1-12)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((rank) => (
+                    <SelectItem key={rank} value={String(rank)}>
+                      {rank}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

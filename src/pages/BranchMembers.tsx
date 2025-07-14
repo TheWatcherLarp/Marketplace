@@ -18,6 +18,7 @@ interface Character {
   crowns: number;
   pennies: number;
   guild_rank: string; // Added guild_rank
+  social_rank: number; // Added social_rank
 }
 
 const BranchMembers = () => {
@@ -160,6 +161,7 @@ const BranchMembers = () => {
                 </CardHeader>
                 <CardContent className="flex-grow">
                   <p className="text-sm text-gray-700 dark:text-gray-300">Rank: {member.guild_rank.charAt(0).toUpperCase() + member.guild_rank.slice(1)}</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">Social Rank: {member.social_rank}</p>
                   <p className="text-sm text-gray-700 dark:text-gray-300">Crowns: {member.crowns}</p>
                   <p className="text-sm text-gray-700 dark:text-gray-300">Pennies: {member.pennies}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">

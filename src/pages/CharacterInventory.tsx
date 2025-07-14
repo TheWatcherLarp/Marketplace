@@ -48,6 +48,7 @@ interface Character {
   crowns: number;
   pennies: number;
   guild_rank: string;
+  social_rank: number; // Added social_rank
 }
 
 interface CharacterItem {
@@ -380,6 +381,9 @@ const CharacterInventory = () => {
               Rank: {typeof character.guild_rank === 'string' && character.guild_rank
                 ? character.guild_rank.charAt(0).toUpperCase() + character.guild_rank.slice(1)
                 : 'N/A'}
+            </p>
+            <p className="text-md text-gray-700 dark:text-gray-300 mt-2">
+              Social Rank: {character.social_rank}
             </p>
             <p className="text-md text-gray-700 dark:text-gray-300 mt-2">
               Branch: {character.branch || 'N/A'}
