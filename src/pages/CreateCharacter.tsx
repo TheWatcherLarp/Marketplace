@@ -85,8 +85,10 @@ const CreateCharacter = () => {
           permitsToInsert.push({ character_id: characterId, permit_type: 'blacksmith' });
         } else if (guild === 'alchemist') {
           permitsToInsert.push({ character_id: characterId, permit_type: 'alchemist' });
-        } else if (guild === 'mage') { // No specific permit for mage yet, but can be added here if needed
-          // permitsToInsert.push({ character_id: characterId, permit_type: 'magic' }); // Example for a new permit type
+        } else if (guild === 'mage') {
+          // No specific permit for mage yet, but can be added here if needed
+        } else if (['sidhe', 'crowa', 'kharack', 'longstor', 'vleyborian', 'rholbor', 'tralda'].includes(guild)) {
+          // No specific permits for church guilds by default, add if needed
         }
 
         if (permitsToInsert.length > 0) {
@@ -179,6 +181,16 @@ const CreateCharacter = () => {
                   <SelectGroup>
                     <SelectLabel>Mage Guilds</SelectLabel>
                     <SelectItem value="mage">Mage</SelectItem>
+                  </SelectGroup>
+                  <SelectGroup>
+                    <SelectLabel>Church Guilds</SelectLabel>
+                    <SelectItem value="sidhe">Sidhe</SelectItem>
+                    <SelectItem value="crowa">Crowa</SelectItem>
+                    <SelectItem value="kharack">Kharack</SelectItem>
+                    <SelectItem value="longstor">Longstor</SelectItem>
+                    <SelectItem value="vleyborian">Vleyborian</SelectItem>
+                    <SelectItem value="rholbor">Rholbor</SelectItem>
+                    <SelectItem value="tralda">Tralda</SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
