@@ -18,12 +18,16 @@ import { SessionContextProvider } from "./components/SessionContextProvider";
 
 const queryClient = new QueryClient();
 
+// Determine the base path for React Router based on the GitHub Pages URL
+// This should match the repository name if deployed to a subpath
+const basename = "/Marketplace"; 
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
+      <BrowserRouter basename={basename}>
         <SessionContextProvider>
           <Routes>
             <Route path="/" element={<Index />} />

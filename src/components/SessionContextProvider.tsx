@@ -93,16 +93,26 @@ export const SessionContextProvider: React.FC<{ children: React.ReactNode }> = (
   useEffect(() => {
     const handleAuthAndCharacterCheck = async () => {
       setLoadingSession(true);
-      const { data: { session: initialSession } } = await supabase.auth.getSession();
-      setSession(initialSession);
+      try {
+        const { data: { session: initialSession }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) {
+          console.error('Error getting initial session:', sessionError);
+          showError(`Failed to get session: ${sessionError.message}`);
+        }
+        setSession(initialSession);
 
-      if (initialSession?.user?.id) {
-        await fetchCharacterData(initialSession.user.id);
-      } else {
-        setActiveCharacter(null);
-        setActiveCharacterPermits([]);
+        if (initialSession?.user?.id) {
+          await fetchCharacterData(initialSession.user.id);
+        } else {
+          setActiveCharacter(null);
+          setActiveCharacterPermits([]);
+        }
+      } catch (error: any) {
+        console.error('Unexpected error during initial session check:', error);
+        showError(`An unexpected error occurred: ${error.message}`);
+      } finally {
+        setLoadingSession(false);
       }
-      setLoadingSession(false);
     };
 
     handleAuthAndCharacterCheck();
