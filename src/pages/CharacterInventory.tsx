@@ -281,6 +281,24 @@ const CharacterInventory = () => {
     }
   };
 
+  const handleRemoveItem = async (itemId: string, itemName: string) => {
+    try {
+      const { error } = await supabase
+        .from('character_items')
+        .delete()
+        .eq('id', itemId);
+
+      if (error) {
+        throw error;
+      }
+
+      showSuccess(`Item '${itemName}' successfully removed from inventory.`);
+      fetchCharacterAndItems(); // Re-fetch to update the UI
+    } catch (error: any) {
+      showError(`Failed to remove item: ${error.message}`);
+    }
+  };
+
   const handleGrantBlacksmithPermit = async () => {
     if (!character?.id) {
       showError('No active character found.');
@@ -452,17 +470,38 @@ const CharacterInventory = () => {
                         Acquired on: {new Date(item.acquired_at).toLocaleDateString()}
                       </p>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedItemToSell(item);
-                        setSellQuantity(1);
-                        setShowSellDialog(true);
-                      }}
-                    >
-                      Sell
-                    </Button>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedItemToSell(item);
+                          setSellQuantity(1);
+                          setShowSellDialog(true);
+                        }}
+                      >
+                        Sell
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="destructive" size="sm">Remove</Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Confirm Removal</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to remove "{item.item_name}" from your inventory? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleRemoveItem(item.id, item.item_name)}>
+                              Remove
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </div>
                 ))}
               </div>
