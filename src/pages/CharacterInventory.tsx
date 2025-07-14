@@ -26,8 +26,16 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { showError, showSuccess } from '@/utils/toast';
 import { useNavigate } from 'react-router-dom';
-import Header from '@/components/Header'; // Import the new Header component
-import { Badge } from '@/components/ui/badge'; // Import Badge component
+import Header from '@/components/Header';
+import { Badge } from '@/components/ui/badge';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"; // Import Table components
 
 interface Character {
   id: string;
@@ -49,7 +57,7 @@ interface CharacterItem {
   quantity: number;
   acquired_at: string;
   crafter_user_id: string | null;
-  permit_required: string | null; // Added permit_required
+  permit_required: string | null;
 }
 
 interface CharacterPermit {
@@ -99,7 +107,7 @@ const CharacterInventory = () => {
       if (charData) {
         const { data: itemsData, error: itemsError } = await supabase
           .from('character_items')
-          .select('*, permit_required') // Select permit_required
+          .select('*, permit_required')
           .eq('character_id', charData.id)
           .order('acquired_at', { ascending: false });
 
@@ -258,7 +266,6 @@ const CharacterInventory = () => {
           price_pennies: sellPennies,
           category: sellCategory,
           quantity_to_sell: sellQuantity,
-          // permit_required is handled by the PostgreSQL function, which fetches it from character_items
         }),
       });
 
@@ -293,7 +300,7 @@ const CharacterInventory = () => {
       }
 
       showSuccess(`Item '${itemName}' successfully removed from inventory.`);
-      fetchCharacterAndItems(); // Re-fetch to update the UI
+      fetchCharacterAndItems();
     } catch (error: any) {
       showError(`Failed to remove item: ${error.message}`);
     }
@@ -315,7 +322,7 @@ const CharacterInventory = () => {
       }
 
       showSuccess('Blacksmith Permit granted!');
-      fetchCharacterAndItems(); // Re-fetch to update the UI
+      fetchCharacterAndItems();
     } catch (error: any) {
       showError(`Failed to grant permit: ${error.message}`);
     }
@@ -458,52 +465,68 @@ const CharacterInventory = () => {
             {characterItems.length === 0 ? (
               <p className="text-center text-gray-600 dark:text-gray-400">Your inventory is empty.</p>
             ) : (
-              <div className="space-y-4">
-                {characterItems.map((item) => (
-                  <div key={item.id} className="border p-3 rounded-md bg-gray-50 dark:bg-gray-700 flex justify-between items-center">
-                    <div>
-                      <h4 className="font-semibold text-lg text-gray-900 dark:text-white">{item.item_name} (x{item.quantity})</h4>
-                      {item.permit_required && item.permit_required !== 'none' && (
-                        <p className="text-xs text-gray-600 dark:text-gray-400">Requires: <Badge variant="outline" className="capitalize">{item.permit_required} Permit</Badge></p>
-                      )}
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Acquired on: {new Date(item.acquired_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div className="flex space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedItemToSell(item);
-                          setSellQuantity(1);
-                          setShowSellDialog(true);
-                        }}
-                      >
-                        Sell
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="destructive" size="sm">Remove</Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Confirm Removal</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Are you sure you want to remove "{item.item_name}" from your inventory? This action cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleRemoveItem(item.id, item.item_name)}>
-                              Remove
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </div>
-                ))}
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[150px]">Item Name</TableHead>
+                      <TableHead>Quantity</TableHead>
+                      <TableHead>Permit Required</TableHead>
+                      <TableHead>Acquired On</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {characterItems.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell className="font-medium">{item.item_name}</TableCell>
+                        <TableCell>{item.quantity}</TableCell>
+                        <TableCell>
+                          {item.permit_required && item.permit_required !== 'none' ? (
+                            <Badge variant="outline" className="capitalize">
+                              {item.permit_required} Permit
+                            </Badge>
+                          ) : (
+                            'None'
+                          )}
+                        </TableCell>
+                        <TableCell>{new Date(item.acquired_at).toLocaleDateString()}</TableCell>
+                        <TableCell className="text-right space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedItemToSell(item);
+                              setSellQuantity(1);
+                              setShowSellDialog(true);
+                            }}
+                          >
+                            Sell
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="destructive" size="sm">Remove</Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Confirm Removal</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to remove "{item.item_name}" from your inventory? This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleRemoveItem(item.id, item.item_name)}>
+                                  Remove
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             )}
           </CardContent>
