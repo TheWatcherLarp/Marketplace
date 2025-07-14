@@ -13,44 +13,21 @@ const CreateCharacter = () => {
   const [race, setRace] = useState('');
   const [guild, setGuild] = useState('');
   const [branch, setBranch] = useState('');
-  // Removed guildRank state as it will be hardcoded to 'apprentice'
-  const [loading, setLoading] = useState(true);
-  const [hasExistingCharacter, setHasExistingCharacter] = useState(false);
+  const [loading, setLoading] = useState(false); // Set to false initially as we're not checking for existing character here
   const navigate = useNavigate();
-  const { session, refreshCharacter } = useSession();
+  const { session, refreshCharacter, activeCharacter, loadingSession } = useSession(); // Get activeCharacter and loadingSession
 
+  // If session is loading or an active character already exists, this component should not be shown.
+  // The SessionContextProvider will handle the redirection.
   useEffect(() => {
-    const checkExistingCharacter = async () => {
-      if (!session?.user?.id) {
-        setLoading(false);
-        return;
-      }
+    if (!loadingSession && activeCharacter) {
+      // If an active character is found after loading, navigate away.
+      // This handles cases where the user might manually navigate to /create-character
+      // but already has an active character.
+      navigate('/home');
+    }
+  }, [loadingSession, activeCharacter, navigate]);
 
-      try {
-        const { data: character, error } = await supabase
-          .from('characters')
-          .select('id')
-          .eq('user_id', session.user.id)
-          .is('retired_at', null)
-          .single();
-
-        if (error && error.code !== 'PGRST116') {
-          throw error;
-        }
-
-        if (character) {
-          setHasExistingCharacter(true);
-          showError('You already have an active character.');
-        }
-      } catch (error: any) {
-        showError(`Error checking existing character: ${error.message}`);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkExistingCharacter();
-  }, [session]);
 
   const handleCreateCharacter = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,10 +35,7 @@ const CreateCharacter = () => {
       showError('User not logged in.');
       return;
     }
-    if (hasExistingCharacter) {
-      showError('You already have an active character.');
-      return;
-    }
+    // No need to check hasExistingCharacter here, SessionContextProvider handles it.
     if (!characterName.trim()) {
       showError('Character name cannot be empty.');
       return;
@@ -133,7 +107,8 @@ const CreateCharacter = () => {
         }
 
         showSuccess(`Character '${characterName}' created successfully as an Apprentice!`);
-        await refreshCharacter();
+        await refreshCharacter(); // Force refresh of session context
+        // Navigation will now be handled by SessionContextProvider
       }
     } catch (error: any) {
       showError(`Error creating character: ${error.message}`);
@@ -142,15 +117,9 @@ const CreateCharacter = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
-        <p className="text-gray-700 dark:text-gray-300">Checking for existing character...</p>
-      </div>
-    );
-  }
-
-  if (hasExistingCharacter) {
+  // If session is loading or an active character already exists, return null
+  // The SessionContextProvider will handle the redirection.
+  if (loadingSession || activeCharacter) {
     return null;
   }
 
@@ -236,7 +205,6 @@ const CreateCharacter = () => {
                 </SelectContent>
               </Select>
             </div>
-            {/* Removed the Guild Rank Select input */}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Creating...' : 'Create Character'}
             </Button>
